@@ -1,0 +1,473 @@
+html, body, #root {
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+}
+
+#root {
+    background-image: url("../assets/background.png");
+}
+
+.main {
+    width: 100%;
+    min-height: 100vh;
+    background: transparent;
+}
+
+.flex {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px;
+}
+
+img {
+    margin-top: 0;
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.legend {
+    width: 260px;
+}
+
+.legend-services {
+    position: relative;
+    right: 30px;
+    bottom: 90px;
+}
+
+.legend-statuses {
+    position: relative;
+    left: 30px;
+    bottom: 90px;
+}
+
+#roundNum {
+    padding-top: 20px;
+}
+
+.wrapper {
+    width: 1000px;
+    position: relative;
+    height: 1000px;
+    margin: 0;
+}
+
+.wrapper-outer {
+    position: relative;
+}
+
+
+.city {
+    position: absolute;
+    top: 309px;
+    left: 288px;
+    width: 420px;
+    height: 420px;
+    background-repeat: no-repeat;
+    background-image: url("../assets/city.png");
+    z-index: 1;
+}
+
+.team {
+    position: absolute;
+    background-repeat: no-repeat;
+    width: 126px;
+    height: 100px;
+    z-index: 10;
+}
+
+.type-1 {
+    background-image: url("../assets/type1.png");
+}
+
+.type-2 {
+    background-image: url("../assets/type2.png");
+}
+
+.type-3 {
+    background-image: url("../assets/type3.png");
+}
+
+
+.team1 {
+    top: 49px;
+    left: 622px;
+}
+
+.team2 {
+    top: 192px;
+    left: 786px;
+}
+
+.team3 {
+    top: 365px;
+    left: 870px;
+}
+
+.team4 {
+    top: 508px;
+    left: 889px;
+}
+
+.team5 {
+    top: 653px;
+    left: 821px;
+}
+
+.team6 {
+    top: 797px;
+    left: 721px;
+}
+
+.team7 {
+    top: 884px;
+    left: 570px;
+}
+
+.team8 {
+    top: 884px;
+    left: 351px;
+}
+
+.team9 {
+    top: 826px;
+    left: 166px;
+}
+
+.team10 {
+    top: 683px;
+    left: 49px;
+}
+
+.team11 {
+    top: 511px;
+    left: 2px;
+}
+
+.team12 {
+    top: 336px;
+    left: 13px;
+}
+
+.team13 {
+    top: 193px;
+    left: 66px;
+}
+
+.team14 {
+    top: 106px;
+    left: 199px;
+}
+
+.team15 {
+    top: 48px;
+    left: 416px;
+}
+
+.service-status {
+background-image: none;
+    width: 36px;
+    height: 41px;
+    background-repeat: no-repeat;
+    align-items: center;
+    position: absolute;
+    display: flex;
+}
+
+.service-status .v {
+    background-image: url("../assets/v.png");
+    width: 24px;
+    height: 24px;
+    margin: 0 6px ;
+}
+
+.service-status .c {
+    background-image: url("../assets/c.png");
+    width: 24px;
+    height: 24px;
+    margin: 0 6px ;
+}
+
+.service-status .s {
+    background-image: url("../assets/s.png");
+    width: 24px;
+    height: 24px;
+    margin: 0 6px ;
+}
+
+.service-status .b {
+    background-image: url("../assets/b.png");
+    width: 24px;
+    height: 24px;
+    margin: 0 6px ;
+}
+
+.service-status .o {
+    background-image: url("../assets/o.png");
+    width: 24px;
+    height: 24px;
+    margin: 0 6px ;
+}
+
+.service-status.green-status {
+    background-image: url("../assets/statusGreen.png");
+}
+
+.service-status.red-status {
+    background-image: url("../assets/statusRed.png");
+}
+
+.service-status.blue-status {
+    background-image: url("../assets/statusBlue.png");
+}
+
+.service-status.orange-status {
+    background-image: url("../assets/statusOrange.png");
+}
+
+.service-status.yellow-status {
+    background-image: url("../assets/statusYellow.png");
+}
+
+.type-1 .v-cell {
+    top: 27px;
+    left: 2px;
+}
+
+.type-1 .logo-cell {
+    top: 28px;
+    left: 37px;
+}
+
+.type-1 .b-cell {
+    top: 28px;
+    left: 71px;
+}
+
+.type-1 .s-cell {
+    top: 0;
+    left: 54px;
+}
+
+.type-1 .o-cell {
+    top: 57px;
+    left: 54px;
+}
+
+.type-1 .c-cell {
+    top: 57px;
+    left: 19px;
+}
+
+
+
+.type-2 .v-cell {
+    top: 0;
+    left: 2px;
+}
+
+.type-2 .logo-cell {
+    top: 30px;
+    left: 54px;
+}
+
+.type-2 .b-cell {
+    top: 30px;
+    left: 88px;
+}
+
+.type-2 .s-cell {
+    top: 0;
+    left: 71px;
+}
+
+.type-2 .o-cell {
+    top: 58px;
+    left: 36px;
+}
+
+.type-2 .c-cell {
+    top: 30px;
+    left: 20px;
+}
+
+.type-3 .v-cell {
+    top: 28px;
+    left: 2px;
+}
+
+.type-3 .logo-cell {
+    top: 29px;
+    left: 37px;
+}
+
+.type-3 .b-cell {
+    top: 28px;
+    left: 71px;
+}
+
+.type-3 .s-cell {
+    top: 0;
+    left: 88px;
+}
+
+.type-3 .o-cell {
+    top: 0;
+    left: 54px;
+}
+
+.type-3 .c-cell {
+    top: 58px;
+    left: 19px;
+}
+
+.team2 .logo-cell {
+    background-image: url("../assets/teamlogos/bbhunters.png");
+}
+
+.team4 .logo-cell {
+    background-image: url("../assets/teamlogos/Cringe4Shell_logo.png");
+}
+
+.team9 .logo-cell {
+    background-image: url("../assets/teamlogos/cryptohub.png");
+}
+
+.team8 .logo-cell {
+    background-image: url("../assets/teamlogos/CSLab.png");
+}
+
+.team5 .logo-cell {
+    background-image: url("../assets/teamlogos/Data361.png");
+}
+
+.team12 .logo-cell {
+    background-image: url("../assets/teamlogos/DirtyPipe.png");
+}
+
+.team14 .logo-cell {
+    background-image: url("../assets/teamlogos/f1agsR3AP3RS.png");
+}
+
+.team13 .logo-cell {
+    background-image: url("../assets/teamlogos/Fail2ban.png");
+}
+
+.team11 .logo-cell {
+    background-image: url("../assets/teamlogos/GPT_in_team.png");
+}
+.team10 .logo-cell {
+    background-image: url("../assets/teamlogos/S0me0neCyberS.png");
+}
+
+.team6 .logo-cell {
+    background-image: url("../assets/teamlogos/SIGWIN.png");
+}
+
+.team7 .logo-cell {
+    background-image: url("../assets/teamlogos/Sorokin_team.png");
+}
+
+.team1 .logo-cell {
+    background-image: url("../assets/teamlogos/t3amw1pe.png");
+}
+
+.team3 .logo-cell {
+    background-image: url("../assets/teamlogos/TA-57_logo.png");
+}
+
+.team15 .logo-cell {
+    background-image: url("../assets/teamlogos/окко.png");
+}
+
+.flag {
+    width: 20px;
+    height: 20px;
+    background-image: url("../assets/flag.png");
+    background-repeat: no-repeat;
+    position: absolute;
+    transition: all 5s ease;
+    z-index: 5;
+    font-size: 16px;
+    font-weight: bold;
+    font-family: "SB Sans Display", sans-serif;
+    color: #08BC08;
+    line-height: 40px;
+    text-align: center;
+    vertical-align: bottom;
+}
+
+#roundNum {
+    padding-top: 60px;
+    font-size: 54px;
+    margin: 0 auto;
+    padding-bottom: 20px;
+    height: 48px;
+    text-align: center;
+    font-weight: bold;
+    font-family: "SB Sans Display", sans-serif;
+    color: #08BC08;
+}
+
+.teamName {
+    font-family: "SB Sans Display", sans-serif;
+    font-weight: 400;
+    color: #08BC08;
+    font-size: 40px;
+    min-width: 300px;
+}
+
+.type-1 .teamName {
+    margin-top: 72px;
+    margin-left: 100px;
+}
+
+.type-2 .teamName {
+    margin-top: 77px;
+    margin-left: 85px;
+
+}.type-3 .teamName {
+     margin-top: 80px;
+     margin-left: 70px;
+ }
+
+
+.team8 .teamName {
+    transform: translateX(-198px) translateY(-20px);
+}
+
+.team9 .teamName {
+    transform: translateX(-300px) translateY(-20px);
+}
+
+.team10 .teamName {
+    transform: translateX(-410px) translateY(-10px);
+}
+
+.team11 .teamName {
+    transform: translateX(-310px) translateY(-20px);
+}
+
+.team12 .teamName {
+    transform: translateX(-260px) translateY(-20px);
+}
+
+.team13 .teamName {
+    transform: translateX(-260px) translateY(-20px);
+}
+
+.team14 .teamName {
+    transform: translateX(-370px) translateY(-80px);
+}
+
+.team15 .teamName {
+    transform: translateX(-150px) translateY(-100px);
+}
+
+
+
+

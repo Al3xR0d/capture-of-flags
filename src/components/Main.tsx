@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import "../assets/styles.css";
+import { getRandomMockData, type ServerResponse as MockServerResponse } from "../mockData";
 
 type TeamServiceStatus = 101 | 102 | 103 | 104 | 110;
 
@@ -11,18 +12,21 @@ type ServiceData = {
 
 type AttackData = {
   victeam_id: number;
-  victeam_cflag: string;
+  victeam_name: string;
+  victeam_cflag: number;
 };
 
-type Team = {
+type TeamData = {
   team_id: number;
+  team_name: string;
+  team_pos: number;
   ServData: ServiceData[];
   AttackData: AttackData[];
 };
 
 type ServerResponse = {
   NumRound: number;
-  TeamData: Team[];
+  TeamData: TeamData[];
 };
 
 const serverIp = "http://10.61.0.12:20000/ctfdata/";
@@ -60,6 +64,7 @@ export default function MainScreen() {
   const rightLegendRef = useRef<HTMLImageElement | null>(null);
   const [round, setRound] = useState<number>(0);
   const [scale, setScale] = useState<number>(1);
+  const [useMockData, setUseMockData] = useState<boolean>(true); // Переключатель для моковых данных
   const [teamStatuses, setTeamStatuses] = useState<
     Record<number, Partial<Record<ServiceData["serv_name"], TeamServiceStatus>>>
   >({});
@@ -109,9 +114,21 @@ export default function MainScreen() {
 
     const getUpdate = async () => {
       try {
-        const response = await axios.get<ServerResponse>(serverIp);
-        setRound(response.data.NumRound);
-        const teams = response.data.TeamData;
+        let response: ServerResponse | MockServerResponse;
+        
+        if (useMockData) {
+          // Используем моковые данные
+          response = getRandomMockData();
+
+          console.log(response)
+        } else {
+          // Используем реальный API
+          const apiResponse = await axios.get<ServerResponse>(serverIp);
+          response = apiResponse.data;
+        }
+        
+        setRound(response.NumRound);
+        const teams = response.TeamData;
         setTeamStatuses(prev => {
           const next: Record<
             number,
@@ -136,18 +153,46 @@ export default function MainScreen() {
         });
       } catch (error) {
         console.error("Ошибка запроса: ", error);
+        // В случае ошибки используем моковые данные как fallback
+        if (!useMockData) {
+          const fallbackData = getRandomMockData();
+          setRound(fallbackData.NumRound);
+          const teams = fallbackData.TeamData;
+          setTeamStatuses(prev => {
+            const next: Record<
+              number,
+              Partial<Record<ServiceData["serv_name"], TeamServiceStatus>>
+            > = { ...prev };
+            teams.forEach(team => {
+              const statuses: Partial<
+                Record<ServiceData["serv_name"], TeamServiceStatus>
+              > = { ...next[team.team_id] };
+              team.ServData.forEach(service => {
+                statuses[service.serv_name] = service.serv_status;
+              });
+              next[team.team_id] = statuses;
+            });
+            return next;
+          });
+
+          teams.forEach(team => {
+            team.AttackData.forEach(attack => {
+              makeFlag(team.team_id, attack.victeam_id, attack.victeam_cflag);
+            });
+          });
+        }
       }
     };
 
     const makeFlag = (
       teamId: number,
       victeamId: number,
-      victeam_cflag: string
+      victeam_cflag: number
     ) => {
       if (!wrapperRef.current) return;
       const flag = document.createElement("div");
       flag.classList.add("flag");
-      flag.textContent = victeam_cflag;
+      flag.textContent = victeam_cflag.toString();
       flag.style.left = `${flagOffsets[victeamId - 1].x}px`;
       flag.style.top = `${flagOffsets[victeamId - 1].y}px`;
       wrapperRef.current.appendChild(flag);
@@ -166,20 +211,33 @@ export default function MainScreen() {
 
     // DOM-манипуляции для статусов заменены на управление через состояние в JSX ниже
 
-    const intervalId = window.setInterval(getUpdate, 60000);
+    const intervalId = window.setTimeout(getUpdate, 60000);
     getUpdate();
 
     return () => {
       window.clearInterval(intervalId);
       window.removeEventListener("resize", updateScale);
     };
-  }, []);
+  }, [useMockData]);
 
   // Имена команд рендерятся напрямую из массива teamNames
 
   return (
     <div className="main">
-      <h1 id="roundNum" ref={headerRef}>{`Round ${round}`}</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h1 id="roundNum" ref={headerRef}>{`Round ${round}`}</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <label style={{ color: 'white', fontSize: '14px' }}>
+            <input
+              type="checkbox"
+              checked={useMockData}
+              onChange={(e) => setUseMockData(e.target.checked)}
+              style={{ marginRight: '5px' }}
+            />
+            Использовать моковые данные
+          </label>
+        </div>
+      </div>
       <div className="flex">
         <img className="legend legend-services" ref={leftLegendRef} src="/src/assets/legend_services.png" alt="" />
         <div

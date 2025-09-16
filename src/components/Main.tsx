@@ -190,19 +190,57 @@ export default function MainScreen() {
       victeam_cflag: number
     ) => {
       if (!wrapperRef.current) return;
+      const wrapper = wrapperRef.current;
+
       const flag = document.createElement("div");
       flag.classList.add("flag");
       flag.textContent = victeam_cflag.toString();
       flag.style.left = `${flagOffsets[victeamId - 1].x}px`;
       flag.style.top = `${flagOffsets[victeamId - 1].y}px`;
-      wrapperRef.current.appendChild(flag);
+      wrapper.appendChild(flag);
 
       const startTime = Math.random() * 59000;
       const endTime = 54500 - startTime;
 
+      const createTrail = (x: number, y: number) => {
+        const trail = document.createElement("div");
+        trail.classList.add("flag-trail");
+        trail.style.left = `${x}px`;
+        trail.style.top = `${y}px`;
+        wrapper.appendChild(trail);
+        // Автоудаление по окончании анимации
+        setTimeout(() => trail.remove(), 700);
+      };
+
       setTimeout(() => {
-        flag.style.left = `${flagOffsets[teamId - 1].x}px`;
-        flag.style.top = `${flagOffsets[teamId - 1].y}px`;
+        // Запускаем перемещение
+        const targetX = flagOffsets[teamId - 1].x;
+        const targetY = flagOffsets[teamId - 1].y;
+
+        // Включаем генерацию шлейфа на время CSS-перехода
+        const trailIntervalMs = 70;
+        const transitionDurationMs = 1200; // синхронизировано со стилями
+
+        // Первый след — в начальной точке
+        createTrail(parseFloat(flag.style.left || "0"), parseFloat(flag.style.top || "0"));
+
+        // Запускаем сам переход
+        flag.style.left = `${targetX}px`;
+        flag.style.top = `${targetY}px`;
+
+        const trailIntervalId = window.setInterval(() => {
+          const computed = window.getComputedStyle(flag);
+          const x = parseFloat(computed.left || "0");
+          const y = parseFloat(computed.top || "0");
+          createTrail(x, y);
+        }, trailIntervalMs);
+
+        // Останавливаем генерацию шлейфа через длительность перехода
+        setTimeout(() => {
+          window.clearInterval(trailIntervalId);
+        }, transitionDurationMs + 50);
+
+        // После паузы (старое поведение) удаляем сам флаг
         setTimeout(() => {
           flag.remove();
         }, endTime);

@@ -390,10 +390,10 @@ background-image: none;
     width: 30px;
     height: 30px;
     color: transparent;
-    background-image: url("../assets/flag_3.png");
+    background-image: url("../assets/flag_4.png");
     background-repeat: no-repeat;
     position: absolute;
-    transition: all 5s ease;
+    transition: left 1.2s linear, top 1.2s linear;
     z-index: 5;
     font-size: 16px;
     font-weight: bold;
@@ -402,6 +402,30 @@ background-image: none;
     line-height: 40px;
     text-align: center;
     vertical-align: bottom;
+}
+
+.flag-trail {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    pointer-events: none;
+    background: rgba(255,255,255,0.18);
+    filter: blur(2px);
+    box-shadow: 0 0 10px rgba(255,255,255,0.25);
+    z-index: 4;
+    animation: trailFade 600ms linear forwards;
+}
+
+@keyframes trailFade {
+    0% {
+        opacity: 0.7;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
 }
 
 #roundNum {

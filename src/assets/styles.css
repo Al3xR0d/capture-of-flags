@@ -428,6 +428,57 @@ background-image: none;
     }
 }
 
+/* Стили для стрелок */
+.arrow {
+    pointer-events: none;
+    z-index: 20;
+}
+
+.arrow-line {
+    filter: drop-shadow(0 0 3px red);
+}
+
+.arrow-head {
+    filter: drop-shadow(0 0 3px red);
+}
+
+.arrow.animated .arrow-line {
+    stroke-dasharray: 10, 5;
+    animation: arrowFlow 0.5s linear infinite;
+}
+
+.arrow.animated .arrow-head {
+    /* animation: arrowPulse 1.5s ease-in-out infinite; */
+}
+
+.flag-counter {
+    filter: drop-shadow(0 0 5px rgba(8, 188, 8, 0.3));
+}
+
+.flag-count-text {
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8));
+}
+
+@keyframes arrowFlow {
+    0% {
+        stroke-dashoffset: 0;
+    }
+    100% {
+        stroke-dashoffset: -15;
+    }
+}
+
+@keyframes arrowPulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
 #roundNum {
     padding-top: 60px;
     font-size: 54px;

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import "../assets/styles.css";
 import { getRandomMockData, type ServerResponse as MockServerResponse } from "../mockData";
+import { Arrow } from "./Arrow";
 
 type TeamServiceStatus = 101 | 102 | 103 | 104 | 110;
 
@@ -27,6 +28,15 @@ type TeamData = {
 type ServerResponse = {
   NumRound: number;
   TeamData: TeamData[];
+};
+
+type ArrowData = {
+  id: string;
+  fromTeamId: number;
+  toTeamId: number;
+  flagCount: number;
+  startTime: number;
+  endTime: number;
 };
 
 const serverIp = "http://10.61.0.12:20000/ctfdata/";
@@ -57,6 +67,25 @@ const flagOffsets = [
   { x: 460, y: 88 }
 ];
 
+// Сместить координаты к центру центрального гекса спрайтов type-1/2/3
+// Значения подобраны эмпирически относительно left/top блока .team (126x100)
+const typeCenterOffset: Record<1 | 2 | 3, { x: number; y: number }> = {
+  1: { x: 5, y: 10 },
+  2: { x: 5, y: 10 },
+  3: { x: 5, y: 10 }
+};
+
+const getTeamTypeById = (teamId: number): 1 | 2 | 3 => {
+  return (((teamId - 1) % 3) + 1) as 1 | 2 | 3;
+};
+
+const getTeamCenter = (teamId: number) => {
+  const base = flagOffsets[teamId - 1];
+  const type = getTeamTypeById(teamId);
+  const off = typeCenterOffset[type];
+  return { x: base.x + off.x, y: base.y + off.y };
+};
+
 export default function MainScreen() {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLHeadingElement | null>(null);
@@ -68,6 +97,10 @@ export default function MainScreen() {
   const [teamStatuses, setTeamStatuses] = useState<
     Record<number, Partial<Record<ServiceData["serv_name"], TeamServiceStatus>>>
   >({});
+  const [arrows, setArrows] = useState<ArrowData[]>([]);
+  const ARROW_DELAY_MAX_MS = 59000; // максимальная задержка появления стрелки
+  const ARROW_TTL_MS = 4000; // время жизни стрелки
+  const ARROW_STOP_BEFORE_PX = 0; // отступ наконечника до цели
   
   const teamNames = useMemo(
     () => [
@@ -113,6 +146,9 @@ export default function MainScreen() {
     window.addEventListener("resize", updateScale);
 
     const getUpdate = async () => {
+      // Очищаем все существующие стрелки
+      setArrows([]);
+      
       try {
         let response: ServerResponse | MockServerResponse;
         
@@ -148,7 +184,7 @@ export default function MainScreen() {
 
         teams.forEach(team => {
           team.AttackData.forEach(attack => {
-            makeFlag(team.team_id, attack.victeam_id, attack.victeam_cflag);
+            createArrow(team.team_id, attack.victeam_id, attack.victeam_cflag);
           });
         });
       } catch (error) {
@@ -177,73 +213,40 @@ export default function MainScreen() {
 
           teams.forEach(team => {
             team.AttackData.forEach(attack => {
-              makeFlag(team.team_id, attack.victeam_id, attack.victeam_cflag);
+              createArrow(team.team_id, attack.victeam_id, attack.victeam_cflag);
             });
           });
         }
       }
     };
 
-    const makeFlag = (
-      teamId: number,
-      victeamId: number,
-      victeam_cflag: number
+    const createArrow = (
+      fromTeamId: number,
+      toTeamId: number,
+      flagCount: number
     ) => {
-      if (!wrapperRef.current) return;
-      const wrapper = wrapperRef.current;
-
-      const flag = document.createElement("div");
-      flag.classList.add("flag");
-      flag.textContent = victeam_cflag.toString();
-      flag.style.left = `${flagOffsets[victeamId - 1].x}px`;
-      flag.style.top = `${flagOffsets[victeamId - 1].y}px`;
-      wrapper.appendChild(flag);
-
-      const startTime = Math.random() * 59000;
-      const endTime = 54500 - startTime;
-
-      const createTrail = (x: number, y: number) => {
-        const trail = document.createElement("div");
-        trail.classList.add("flag-trail");
-        trail.style.left = `${x}px`;
-        trail.style.top = `${y}px`;
-        wrapper.appendChild(trail);
-        // Автоудаление по окончании анимации
-        setTimeout(() => trail.remove(), 700);
+      const startTime = Math.random() * ARROW_DELAY_MAX_MS; // случайная задержка до ~60 сек
+      const ttlMs = ARROW_TTL_MS; // время жизни стрелки после появления
+      
+      const arrowId = `${fromTeamId}-${toTeamId}-${Date.now()}`;
+      
+      const newArrow: ArrowData = {
+        id: arrowId,
+        fromTeamId,
+        toTeamId,
+        flagCount,
+        startTime,
+        endTime: ttlMs
       };
 
+      // Добавляем стрелку с задержкой
       setTimeout(() => {
-        // Запускаем перемещение
-        const targetX = flagOffsets[teamId - 1].x;
-        const targetY = flagOffsets[teamId - 1].y;
-
-        // Включаем генерацию шлейфа на время CSS-перехода
-        const trailIntervalMs = 70;
-        const transitionDurationMs = 1200; // синхронизировано со стилями
-
-        // Первый след — в начальной точке
-        createTrail(parseFloat(flag.style.left || "0"), parseFloat(flag.style.top || "0"));
-
-        // Запускаем сам переход
-        flag.style.left = `${targetX}px`;
-        flag.style.top = `${targetY}px`;
-
-        const trailIntervalId = window.setInterval(() => {
-          const computed = window.getComputedStyle(flag);
-          const x = parseFloat(computed.left || "0");
-          const y = parseFloat(computed.top || "0");
-          createTrail(x, y);
-        }, trailIntervalMs);
-
-        // Останавливаем генерацию шлейфа через длительность перехода
+        setArrows(prev => [...prev, newArrow]);
+        
+        // Удаляем стрелку через определенное время
         setTimeout(() => {
-          window.clearInterval(trailIntervalId);
-        }, transitionDurationMs + 50);
-
-        // После паузы (старое поведение) удаляем сам флаг
-        setTimeout(() => {
-          flag.remove();
-        }, endTime);
+          setArrows(prev => prev.filter(arrow => arrow.id !== arrowId));
+        }, ttlMs);
       }, startTime);
     };
 
@@ -289,6 +292,38 @@ export default function MainScreen() {
             style={{ transform: `scale(${scale})`, transformOrigin: "top left" }}
           >
           <div className="city" />
+          
+          {/* SVG контейнер для стрелок */}
+          <svg
+            className="arrows-container"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              zIndex: 20
+            }}
+          >
+            {arrows.map(arrow => {
+              const fromPos = getTeamCenter(arrow.fromTeamId);
+              const toPos = getTeamCenter(arrow.toTeamId);
+              
+              return (
+                <Arrow
+                  key={arrow.id}
+                  fromX={fromPos.x}
+                  fromY={fromPos.y}
+                  toX={toPos.x}
+                  toY={toPos.y}
+                  flagCount={arrow.flagCount}
+                  isAnimated={true}
+                  stopBeforePx={ARROW_STOP_BEFORE_PX}
+                />
+              );
+            })}
+          </svg>
           {[...Array(15)].map((_, idx) => {
             const teamIndex = idx + 1;
             const typeClass = (idx % 3 + 1) as 1 | 2 | 3;

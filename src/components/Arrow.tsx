@@ -26,21 +26,44 @@ export const Arrow: React.FC<ArrowProps> = ({
   const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
 
   // Параметры стрелки
-  const strokeWidth = 3;
-  const headLength = 15;
-  const headWidth = 8;
+  const strokeWidth = 7; // была 3
+  const headLength = 28; // было 15
+  const headWidth = 14; // было 8
   
   // Смещение для отображения количества флагов
   const offsetY = flagCount > 1 ? (flagCount - 1) * 8 : 0;
 
+  // Предварительные вычисления координат для конца линии и точек наконечника
+  const angleRad = angle * Math.PI / 180;
+  const lineEndX = toX - (headLength + stopBeforePx) * Math.cos(angleRad);
+  const lineEndY = toY - (headLength + stopBeforePx) * Math.sin(angleRad) + offsetY;
+
+  const headTipX = toX - stopBeforePx * Math.cos(angleRad);
+  const headTipY = toY - stopBeforePx * Math.sin(angleRad) + offsetY;
+  const headBaseLeftX = toX - (headLength + stopBeforePx) * Math.cos(angleRad) - headWidth * Math.sin(angleRad);
+  const headBaseLeftY = toY - (headLength + stopBeforePx) * Math.sin(angleRad) + headWidth * Math.cos(angleRad) + offsetY;
+  const headBaseRightX = toX - (headLength + stopBeforePx) * Math.cos(angleRad) + headWidth * Math.sin(angleRad);
+  const headBaseRightY = toY - (headLength + stopBeforePx) * Math.sin(angleRad) - headWidth * Math.cos(angleRad) + offsetY;
+
   return (
     <g className={`arrow ${isAnimated ? 'animated' : ''}`}>
+      {/* Подложка (обводка) для основной линии */}
+      <line
+        x1={fromX}
+        y1={fromY + offsetY}
+        x2={lineEndX}
+        y2={lineEndY}
+        stroke="#000"
+        strokeWidth={strokeWidth + 4}
+        strokeLinecap="round"
+        className="arrow-line-outline"
+      />
       {/* Основная линия стрелки */}
       <line
         x1={fromX}
         y1={fromY + offsetY}
-        x2={toX - (headLength + stopBeforePx) * Math.cos(angle * Math.PI / 180)}
-        y2={toY - (headLength + stopBeforePx) * Math.sin(angle * Math.PI / 180) + offsetY}
+        x2={lineEndX}
+        y2={lineEndY}
         stroke="red"
         strokeWidth={strokeWidth}
         strokeLinecap="round"
@@ -48,8 +71,14 @@ export const Arrow: React.FC<ArrowProps> = ({
       />
       
       {/* Наконечник стрелки */}
+      {/* Обводка наконечника */}
       <polygon
-        points={`${toX - stopBeforePx * Math.cos(angle * Math.PI / 180)},${toY - stopBeforePx * Math.sin(angle * Math.PI / 180) + offsetY} ${toX - (headLength + stopBeforePx) * Math.cos(angle * Math.PI / 180) - headWidth * Math.sin(angle * Math.PI / 180)},${toY - (headLength + stopBeforePx) * Math.sin(angle * Math.PI / 180) + headWidth * Math.cos(angle * Math.PI / 180) + offsetY} ${toX - (headLength + stopBeforePx) * Math.cos(angle * Math.PI / 180) + headWidth * Math.sin(angle * Math.PI / 180)},${toY - (headLength + stopBeforePx) * Math.sin(angle * Math.PI / 180) - headWidth * Math.cos(angle * Math.PI / 180) + offsetY}`}
+        points={`${headTipX},${headTipY} ${headBaseLeftX},${headBaseLeftY} ${headBaseRightX},${headBaseRightY}`}
+        fill="#000"
+        className="arrow-head-outline"
+      />
+      <polygon
+        points={`${headTipX},${headTipY} ${headBaseLeftX},${headBaseLeftY} ${headBaseRightX},${headBaseRightY}`}
         fill="red"
         className="arrow-head"
       />

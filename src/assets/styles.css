@@ -435,21 +435,27 @@ background-image: none;
 }
 
 .arrow-line {
-    filter: drop-shadow(0 0 3px red);
+    filter: drop-shadow(0 0 4px rgba(255,0,0,0.9));
+}
+
+.arrow-line-outline {
+    filter: drop-shadow(0 0 1px rgba(0,0,0,0.9));
 }
 
 .arrow-head {
-    filter: drop-shadow(0 0 3px red);
+    filter: drop-shadow(0 0 4px rgba(255,0,0,0.9));
+}
+
+.arrow-head-outline {
+    filter: drop-shadow(0 0 1px rgba(0,0,0,0.9));
 }
 
 .arrow.animated .arrow-line {
-    stroke-dasharray: 10, 5;
-    animation: arrowFlow 0.5s linear infinite;
+    stroke-dasharray: 14, 7;
+    animation: arrowFlow 0.4s linear infinite;
 }
 
-.arrow.animated .arrow-head {
-    /* animation: arrowPulse 1.5s ease-in-out infinite; */
-}
+
 
 .flag-counter {
     filter: drop-shadow(0 0 5px rgba(8, 188, 8, 0.3));
@@ -457,6 +463,12 @@ background-image: none;
 
 .flag-count-text {
     filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8));
+}
+
+.attack-defence-container {
+    display: flex;
+    flex-direction: column;
+    align-items: end;
 }
 
 @keyframes arrowFlow {
@@ -489,6 +501,44 @@ background-image: none;
     font-weight: bold;
     font-family: "SB Sans Display", sans-serif;
     color: #08BC08;
+}
+
+/* Бейдж фазы (АТАКА/ЗАЩИТА) */
+.phase-badge {
+    position: relative;
+    color: #fff;
+    font-family: "SB Sans Display", sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    letter-spacing: 2px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    margin-right: 12px;
+    user-select: none;
+    min-width: 140px;
+    text-align: center;
+}
+.phase-badge.attack {
+    background: linear-gradient(180deg, rgba(255,0,0,0.85), rgba(160,0,0,0.85));
+    box-shadow: 0 0 18px rgba(255,0,0,0.45);
+}
+.phase-badge.defense {
+    background: linear-gradient(180deg, rgba(0,120,255,0.85), rgba(0,70,160,0.85));
+    box-shadow: 0 0 18px rgba(0,120,255,0.45);
+}
+
+/* Щиты (фаза защиты) */
+.shield-ring {
+    filter: drop-shadow(0 0 6px rgba(0, 183, 255, 0.7));
+}
+.shield-pulse {
+    animation: shieldPulse 1.1s ease-in-out infinite;
+}
+
+@keyframes shieldPulse {
+    0% { stroke-dasharray: 6 6; stroke-width: 1; opacity: 0.8; }
+    50% { stroke-dasharray: 2 10; stroke-width: 3; opacity: 1; }
+    100% { stroke-dasharray: 6 6; stroke-width: 1; opacity: 0.8; }
 }
 
 .teamName {

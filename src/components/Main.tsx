@@ -3,6 +3,7 @@ import axios from "axios";
 import "../assets/styles.css";
 import { getRandomMockData, type ServerResponse as MockServerResponse } from "../mockData";
 import { Arrow } from "./Arrow";
+import { Shield } from "./Shield.tsx";
 
 type TeamServiceStatus = 101 | 102 | 103 | 104 | 110;
 
@@ -37,6 +38,15 @@ type ArrowData = {
   flagCount: number;
   startTime: number;
   endTime: number;
+  addedAtMs?: number;
+};
+
+type ShieldData = {
+  id: string;
+  teamId: number;
+  startTime: number;
+  endTime: number;
+  addedAtMs?: number;
 };
 
 const serverIp = "http://10.61.0.12:20000/ctfdata/";
@@ -98,9 +108,18 @@ export default function MainScreen() {
     Record<number, Partial<Record<ServiceData["serv_name"], TeamServiceStatus>>>
   >({});
   const [arrows, setArrows] = useState<ArrowData[]>([]);
-  const ARROW_DELAY_MAX_MS = 59000; // максимальная задержка появления стрелки
+  const [shields, setShields] = useState<ShieldData[]>([]);
+  const [nowMs, setNowMs] = useState<number>(Date.now());
+  const ROUND_MS = 60000;
+  const ATTACK_MS = 40000;
+  const DEFENSE_MS = ROUND_MS - ATTACK_MS;
   const ARROW_TTL_MS = 4000; // время жизни стрелки
+  const SHIELD_TTL_MS = 3000; // время жизни одного импульса щита
   const ARROW_STOP_BEFORE_PX = 0; // отступ наконечника до цели
+  const [lastVictimTeamIds, setLastVictimTeamIds] = useState<number[]>([]);
+
+  const timeInRound = nowMs % ROUND_MS;
+  const isAttackPhase = timeInRound < ATTACK_MS;
   
   const teamNames = useMemo(
     () => [
@@ -146,8 +165,13 @@ export default function MainScreen() {
     window.addEventListener("resize", updateScale);
 
     const getUpdate = async () => {
-      // Очищаем все существующие стрелки
+      // Локальная фаза раунда (без зависимости от состояния)
+      const now = Date.now();
+      const timeInRoundLocal = now % ROUND_MS;
+      const isAttackPhaseLocal = timeInRoundLocal < ATTACK_MS;
+      // Очищаем все существующие стрелки и щиты при начале нового запроса
       setArrows([]);
+      setShields([]);
       
       try {
         let response: ServerResponse | MockServerResponse;
@@ -182,11 +206,23 @@ export default function MainScreen() {
           return next;
         });
 
+        const victims: number[] = [];
         teams.forEach(team => {
           team.AttackData.forEach(attack => {
-            createArrow(team.team_id, attack.victeam_id, attack.victeam_cflag);
+            victims.push(attack.victeam_id);
           });
         });
+        setLastVictimTeamIds(Array.from(new Set(victims)));
+
+        // Планируем стрелки только в фазе атаки
+        if (isAttackPhaseLocal) {
+          const msLeft = ATTACK_MS - (timeInRoundLocal % ATTACK_MS);
+          teams.forEach(team => {
+            team.AttackData.forEach(attack => {
+              createArrow(team.team_id, attack.victeam_id, attack.victeam_cflag, msLeft);
+            });
+          });
+        }
       } catch (error) {
         console.error("Ошибка запроса: ", error);
         // В случае ошибки используем моковые данные как fallback
@@ -211,11 +247,22 @@ export default function MainScreen() {
             return next;
           });
 
+          const victims: number[] = [];
           teams.forEach(team => {
             team.AttackData.forEach(attack => {
-              createArrow(team.team_id, attack.victeam_id, attack.victeam_cflag);
+              victims.push(attack.victeam_id);
             });
           });
+          setLastVictimTeamIds(Array.from(new Set(victims)));
+
+          if (isAttackPhaseLocal) {
+            const msLeft = ATTACK_MS - (timeInRoundLocal % ATTACK_MS);
+            teams.forEach(team => {
+              team.AttackData.forEach(attack => {
+                createArrow(team.team_id, attack.victeam_id, attack.victeam_cflag, msLeft);
+              });
+            });
+          }
         }
       }
     };
@@ -223,9 +270,10 @@ export default function MainScreen() {
     const createArrow = (
       fromTeamId: number,
       toTeamId: number,
-      flagCount: number
+      flagCount: number,
+      maxDelayMs: number
     ) => {
-      const startTime = Math.random() * ARROW_DELAY_MAX_MS; // случайная задержка до ~60 сек
+      const startTime = Math.random() * Math.max(0, maxDelayMs); // задержка в пределах фазы атаки
       const ttlMs = ARROW_TTL_MS; // время жизни стрелки после появления
       
       const arrowId = `${fromTeamId}-${toTeamId}-${Date.now()}`;
@@ -241,25 +289,66 @@ export default function MainScreen() {
 
       // Добавляем стрелку с задержкой
       setTimeout(() => {
-        setArrows(prev => [...prev, newArrow]);
-        
-        // Удаляем стрелку через определенное время
+        const appearedAt = Date.now();
+        setArrows(prev => [...prev, { ...newArrow, addedAtMs: appearedAt }]);
+        // Жёсткое удаление по TTL на случай пропуска периодической чистки
         setTimeout(() => {
           setArrows(prev => prev.filter(arrow => arrow.id !== arrowId));
-        }, ttlMs);
+        }, ttlMs + 300);
       }, startTime);
     };
 
     // DOM-манипуляции для статусов заменены на управление через состояние в JSX ниже
 
-    const intervalId = window.setTimeout(getUpdate, 60000);
+    const tickId = window.setInterval(() => setNowMs(Date.now()), 200);
+    const pollId = window.setInterval(getUpdate, ROUND_MS);
     getUpdate();
 
     return () => {
-      window.clearInterval(intervalId);
+      window.clearInterval(pollId);
+      window.clearInterval(tickId);
       window.removeEventListener("resize", updateScale);
     };
   }, [useMockData]);
+
+  // Переключение фаз: в защитной фазе показываем щиты у последних жертв
+  useEffect(() => {
+    // Этот эффект реагирует только на смену фазы
+    if (isAttackPhase) {
+      setShields([]);
+      return;
+    }
+    // Фаза защиты: убираем стрелки, показываем импульсы щита
+    setArrows([]);
+    const msIntoDefense = timeInRound - ATTACK_MS;
+    const msLeftDefense = Math.max(0, DEFENSE_MS - msIntoDefense);
+    const pulsesPerTeam = 3;
+    lastVictimTeamIds.forEach(teamId => {
+      for (let i = 0; i < pulsesPerTeam; i++) {
+        const delay = Math.random() * msLeftDefense;
+        const id = `${teamId}-shield-${Date.now()}-${i}-${Math.random()}`;
+        setTimeout(() => {
+          setShields(prev => [
+            ...prev,
+            { id, teamId, startTime: delay, endTime: SHIELD_TTL_MS, addedAtMs: Date.now() }
+          ]);
+        }, delay);
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAttackPhase]);
+
+  // Периодическая чистка просроченных стрелок и щитов, чтобы не зависали
+  useEffect(() => {
+    setArrows(prev => prev.filter(a => {
+      if (!a.addedAtMs) return true;
+      return nowMs - a.addedAtMs <= a.endTime + 250; // небольшой буфер
+    }));
+    setShields(prev => prev.filter(s => {
+      if (!s.addedAtMs) return true;
+      return nowMs - s.addedAtMs <= s.endTime + 250;
+    }));
+  }, [nowMs]);
 
   // Имена команд рендерятся напрямую из массива teamNames
 
@@ -268,6 +357,9 @@ export default function MainScreen() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h1 id="roundNum" ref={headerRef}>{`Round ${round}`}</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* <div className={`phase-badge ${isAttackPhase ? 'attack' : 'defense'}`}>
+          {isAttackPhase ? 'АТАКА' : 'ЗАЩИТА'}
+        </div> */}
           <label style={{ color: 'white', fontSize: '14px' }}>
             <input
               type="checkbox"
@@ -306,7 +398,7 @@ export default function MainScreen() {
               zIndex: 20
             }}
           >
-            {arrows.map(arrow => {
+            {isAttackPhase && arrows.map(arrow => {
               const fromPos = getTeamCenter(arrow.fromTeamId);
               const toPos = getTeamCenter(arrow.toTeamId);
               
@@ -321,6 +413,26 @@ export default function MainScreen() {
                   isAnimated={true}
                   stopBeforePx={ARROW_STOP_BEFORE_PX}
                 />
+              );
+            })}
+          </svg>
+          {/* SVG контейнер для щитов */}
+          <svg
+            className="shields-container"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              zIndex: 18
+            }}
+          >
+            {!isAttackPhase && shields.map(shield => {
+              const pos = getTeamCenter(shield.teamId);
+              return (
+                <Shield key={shield.id} cx={pos.x} cy={pos.y} radius={56} />
               );
             })}
           </svg>
@@ -380,7 +492,12 @@ export default function MainScreen() {
           })}
           </div>
         </div>
+        <div className="attack-defence-container">
         <img className="legend legend-statuses" ref={rightLegendRef} src="/src/assets/legend_statuses.png" alt="" />
+        <div className={`phase-badge ${isAttackPhase ? 'attack' : 'defense'}`}>
+          {isAttackPhase ? 'АТАКА' : 'ЗАЩИТА'}
+        </div>
+        </div>
       </div>
     </div>
   );

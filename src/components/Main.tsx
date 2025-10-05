@@ -49,7 +49,7 @@ type ShieldData = {
   addedAtMs?: number;
 };
 
-const serverIp = "http://10.61.0.12:20000/ctfdata/";
+const serverIp = "http://10.62.0.120:8000/ctfdata/";
 
 const statusTranslate: Record<TeamServiceStatus, string> = {
   101: "green-status",
@@ -103,7 +103,7 @@ export default function MainScreen() {
   const rightLegendRef = useRef<HTMLImageElement | null>(null);
   const [round, setRound] = useState<number>(0);
   const [scale, setScale] = useState<number>(1);
-  const [useMockData, setUseMockData] = useState<boolean>(true); // Переключатель для моковых данных
+  const [useMockData, setUseMockData] = useState<boolean>(false); // Переключатель для моковых данных
   const [teamStatuses, setTeamStatuses] = useState<
     Record<number, Partial<Record<ServiceData["serv_name"], TeamServiceStatus>>>
   >({});
@@ -180,11 +180,12 @@ export default function MainScreen() {
           // Используем моковые данные
           response = getRandomMockData();
 
-          console.log(response)
+     
         } else {
           // Используем реальный API
           const apiResponse = await axios.get<ServerResponse>(serverIp);
           response = apiResponse.data;
+        
         }
         
         setRound(response.NumRound);
@@ -226,44 +227,47 @@ export default function MainScreen() {
       } catch (error) {
         console.error("Ошибка запроса: ", error);
         // В случае ошибки используем моковые данные как fallback
-        if (!useMockData) {
-          const fallbackData = getRandomMockData();
-          setRound(fallbackData.NumRound);
-          const teams = fallbackData.TeamData;
-          setTeamStatuses(prev => {
-            const next: Record<
-              number,
-              Partial<Record<ServiceData["serv_name"], TeamServiceStatus>>
-            > = { ...prev };
-            teams.forEach(team => {
-              const statuses: Partial<
-                Record<ServiceData["serv_name"], TeamServiceStatus>
-              > = { ...next[team.team_id] };
-              team.ServData.forEach(service => {
-                statuses[service.serv_name] = service.serv_status;
-              });
-              next[team.team_id] = statuses;
-            });
-            return next;
-          });
 
-          const victims: number[] = [];
-          teams.forEach(team => {
-            team.AttackData.forEach(attack => {
-              victims.push(attack.victeam_id);
-            });
-          });
-          setLastVictimTeamIds(Array.from(new Set(victims)));
+        // УБРАТЬ МОКОВЫЕ ДАННЫЕ В СЛУЧАЕ ОШИБКИ 
 
-          if (isAttackPhaseLocal) {
-            const msLeft = ATTACK_MS - (timeInRoundLocal % ATTACK_MS);
-            teams.forEach(team => {
-              team.AttackData.forEach(attack => {
-                createArrow(team.team_id, attack.victeam_id, attack.victeam_cflag, msLeft);
-              });
-            });
-          }
-        }
+        // if (!useMockData) {
+        //   const fallbackData = getRandomMockData();
+        //   setRound(fallbackData.NumRound);
+        //   const teams = fallbackData.TeamData;
+        //   setTeamStatuses(prev => {
+        //     const next: Record<
+        //       number,
+        //       Partial<Record<ServiceData["serv_name"], TeamServiceStatus>>
+        //     > = { ...prev };
+        //     teams.forEach(team => {
+        //       const statuses: Partial<
+        //         Record<ServiceData["serv_name"], TeamServiceStatus>
+        //       > = { ...next[team.team_id] };
+        //       team.ServData.forEach(service => {
+        //         statuses[service.serv_name] = service.serv_status;
+        //       });
+        //       next[team.team_id] = statuses;
+        //     });
+        //     return next;
+        //   });
+
+        //   const victims: number[] = [];
+        //   teams.forEach(team => {
+        //     team.AttackData.forEach(attack => {
+        //       victims.push(attack.victeam_id);
+        //     });
+        //   });
+        //   setLastVictimTeamIds(Array.from(new Set(victims)));
+
+        //   if (isAttackPhaseLocal) {
+        //     const msLeft = ATTACK_MS - (timeInRoundLocal % ATTACK_MS);
+        //     teams.forEach(team => {
+        //       team.AttackData.forEach(attack => {
+        //         createArrow(team.team_id, attack.victeam_id, attack.victeam_cflag, msLeft);
+        //       });
+        //     });
+        //   }
+        // }
       }
     };
 
@@ -358,15 +362,17 @@ export default function MainScreen() {
         {/* <div className={`phase-badge ${isAttackPhase ? 'attack' : 'defense'}`}>
           {isAttackPhase ? 'АТАКА' : 'ЗАЩИТА'}
         </div> */}
-          <label style={{ color: 'white', fontSize: '14px' }}>
+          {/* <label style={{ color: 'white', fontSize: '14px' }}>
             <input
               type="checkbox"
               checked={useMockData}
-              onChange={(e) => setUseMockData(e.target.checked)}
+              onChange={(e) => {
+                console.log(e.target)
+                setUseMockData(e.target.checked)}}
               style={{ marginRight: '5px' }}
             />
             Использовать моковые данные
-          </label>
+          </label> */}
         </div>
       </div>
       <div className="flex">

@@ -37,13 +37,13 @@ img {
 .legend-services {
     position: relative;
     right: 30px;
-    bottom: 90px;
+    bottom: 80px;
 }
 
 .legend-statuses {
     position: relative;
     left: 30px;
-    bottom: 90px;
+    bottom: 80px;
 }
 
 #roundNum {
@@ -328,62 +328,76 @@ background-image: none;
 }
 
 .team2 .logo-cell {
-    background-image: url("../assets/teamlogos/bbhunters.png");
+    background-image: url("../assets/teamlogos/medoed_black.png");
+    background-position: center;
 }
 
 .team4 .logo-cell {
-    background-image: url("../assets/teamlogos/Cringe4Shell_logo.png");
+    background-image: url("../assets/teamlogos/RedFlagRadar.png");
+    background-position: center;
 }
 
 .team9 .logo-cell {
-    background-image: url("../assets/teamlogos/cryptohub.png");
-}
-
-.team8 .logo-cell {
-    background-image: url("../assets/teamlogos/CSLab.png");
-}
-
-.team5 .logo-cell {
-    background-image: url("../assets/teamlogos/Data361.png");
-}
-
-.team12 .logo-cell {
-    background-image: url("../assets/teamlogos/DirtyPipe.png");
-}
-
-.team14 .logo-cell {
-    background-image: url("../assets/teamlogos/f1agsR3AP3RS.png");
-}
-
-.team13 .logo-cell {
-    background-image: url("../assets/teamlogos/Fail2ban.png");
-}
-
-.team11 .logo-cell {
-    background-image: url("../assets/teamlogos/GPT_in_team.png");
-}
-.team10 .logo-cell {
-    background-image: url("../assets/teamlogos/S0me0neCyberS.png");
-}
-
-.team6 .logo-cell {
-    background-image: url("../assets/teamlogos/SIGWIN.png");
-}
-
-.team7 .logo-cell {
-    background-image: url("../assets/teamlogos/Sorokin_team.png");
-}
-
-.team1 .logo-cell {
-    background-image: url("../assets/teamlogos/t3amw1pe.png");
-}
-
-.team3 .logo-cell {
     background-image: url("../assets/teamlogos/TA-57_logo.png");
 }
 
+.team8 .logo-cell {
+    background-image: url("../assets/teamlogos/Appsecers.png");
+    background-position: center;
+}
+
+.team5 .logo-cell {
+    background-image: url("../assets/teamlogos/meows2.png");
+    background-position: center;
+}
+
+.team12 .logo-cell {
+    background-image: url("../assets/teamlogos/CTF_team.png");
+    background-position: center;
+}
+
+.team14 .logo-cell {
+    background-image: url("../assets/teamlogos/CTF_team.png");
+    background-position: center;
+}
+
+.team13 .logo-cell {
+    background-image: url("../assets/teamlogos/CTF_team.png");
+    background-position: center;
+}
+
+.team11 .logo-cell {
+    background-image: url("../assets/teamlogos/snake.png");
+    background-position: center;
+}
+.team10 .logo-cell {
+    background-image: url("../assets/teamlogos/Cringe4Shell_logo.png");
+}
+
+.team6 .logo-cell {
+    background-image: url("../assets/teamlogos/researchers.png");
+    background-position: center;
+}
+
+.team7 .logo-cell {
+    background-image: url("../assets/teamlogos/Левое ухо.png");
+    background-position: center;
+}
+
+.team1 .logo-cell {
+    background-image: url("../assets/teamlogos/wipe.png");
+    background-position: center;
+}
+
+.team3 .logo-cell {
+    background-image: url("../assets/teamlogos/S0C.png");
+    background-position: center;
+}
+
 .team15 .logo-cell {
-    background-image: url("../assets/teamlogos/окко.png");
+    /* background-image: url("../assets/teamlogos/окко.png"); */
+    background-image: url("../assets/teamlogos/IskIn.png");
+    background-position: center;
 }
 
 .flag {
@@ -492,7 +506,7 @@ background-image: none;
 }
 
 #roundNum {
-    padding-top: 60px;
+    /* padding-top: 60px; */
     font-size: 54px;
     margin: 0 auto;
     padding-bottom: 20px;
@@ -563,17 +577,28 @@ background-image: none;
      margin-left: 70px;
  }
 
+.team3 .teamName {
+    transform: translateX(-15px) translateY(0px);
+}
 
 .team8 .teamName {
-    transform: translateX(-198px) translateY(-20px);
+    transform: translateX(-300px) translateY(-15px);
+}
+
+.team7 .teamName {
+    transform: translateX(10px) translateY(-15px);
+}
+
+.team6 .teamName {
+    transform: translateX(10px) translateY(-15px);
 }
 
 .team9 .teamName {
-    transform: translateX(-300px) translateY(-20px);
+    transform: translateX(-170px) translateY(-30px);
 }
 
 .team10 .teamName {
-    transform: translateX(-410px) translateY(-10px);
+    transform: translateX(-330px) translateY(-10px);
 }
 
 .team11 .teamName {
@@ -581,7 +606,7 @@ background-image: none;
 }
 
 .team12 .teamName {
-    transform: translateX(-260px) translateY(-20px);
+    transform: translateX(-340px) translateY(-20px);
 }
 
 .team13 .teamName {
@@ -589,7 +614,7 @@ background-image: none;
 }
 
 .team14 .teamName {
-    transform: translateX(-370px) translateY(-80px);
+    transform: translateX(-320px) translateY(-80px);
 }
 
 .team15 .teamName {

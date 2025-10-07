@@ -8,7 +8,7 @@ import { Shield } from "./Shield.tsx";
 type TeamServiceStatus = 101 | 102 | 103 | 104 | 110;
 
 type ServiceData = {
-  serv_name: "V.B0ARD" | "B0i1RUM" | "0BCA5" | "SMR+B1BNC" | "CTR1PANEL";
+  serv_name: "[1] [VibeAura]" | "[2] [BioForge: GenLang]" | "[3] [SmartHome]" | "[4] [SleepCaps]" | "[5] [SKUDS]";
   serv_status: TeamServiceStatus;
 };
 
@@ -123,21 +123,21 @@ export default function MainScreen() {
   
   const teamNames = useMemo(
     () => [
-      "t3amw1pe",
-      "BBhunt3rs",
-      "TA-57",
+      "T3amW1pe",
+      "M3d03d",
+      "Some0neCyberS",
+      "RedFlagRadar",
+      "MeOow5_T3aM_CaT5",
+      "researchers_1054",
+      "JIEBOE_yXO",
+      "AppSECeRS",
+      "TA57",
       "Cringe4Shell",
-      "Data361",
-      "SIGWIN",
-      "Sorokin_team",
-      "CSLab",
-      "CryptoHUB",
-      "S0me0neCyberS",
-      "GPT_in_team",
-      "DirtyPipe",
-      "Fail2ban",
-      "f1agsR3AP3RS",
-      "OKKO"
+      "Sn4ke_3aters",
+      "BI.ZONE Team",
+      "SEC.T.A.",
+      "Assume Birc",
+      "IskIn"
     ],
     []
   );
@@ -199,6 +199,7 @@ export default function MainScreen() {
             const statuses: Partial<
               Record<ServiceData["serv_name"], TeamServiceStatus>
             > = { ...next[team.team_id] };
+          console.log("team:", team)
             team.ServData.forEach(service => {
               statuses[service.serv_name] = service.serv_status;
             });
@@ -356,7 +357,7 @@ export default function MainScreen() {
 
   return (
     <div className="main">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 id="roundNum" ref={headerRef}>{`Round ${round}`}</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         {/* <div className={`phase-badge ${isAttackPhase ? 'attack' : 'defense'}`}>
@@ -456,36 +457,36 @@ export default function MainScreen() {
                   {teamNames[idx] || ""}
                 </p>
                 <div
-                  className={`service-status v-cell ${statuses["V.B0ARD"]
-                    ? statusTranslate[statuses["V.B0ARD"]] as string
+                  className={`service-status v-cell ${statuses["[1] [VibeAura]"]
+                    ? statusTranslate[statuses["[1] [VibeAura]"]] as string
                     : ""}`}
                 >
                   <div className="service v" />
                 </div>
                 <div
-                  className={`service-status c-cell ${statuses["CTR1PANEL"]
-                    ? statusTranslate[statuses["CTR1PANEL"]] as string
+                  className={`service-status c-cell ${statuses["[5] [SKUDS]"]
+                    ? statusTranslate[statuses["[5] [SKUDS]"]] as string
                     : ""}`}
                 >
                   <div className="service c" />
                 </div>
                 <div
-                  className={`service-status s-cell ${statuses["SMR+B1BNC"]
-                    ? statusTranslate[statuses["SMR+B1BNC"]] as string
+                  className={`service-status s-cell ${statuses["[4] [SleepCaps]"]
+                    ? statusTranslate[statuses["[4] [SleepCaps]"]] as string
                     : ""}`}
                 >
                   <div className="service s" />
                 </div>
                 <div
-                  className={`service-status b-cell ${statuses["B0i1RUM"]
-                    ? statusTranslate[statuses["B0i1RUM"]] as string
+                  className={`service-status b-cell ${statuses["[2] [BioForge: GenLang]"]
+                    ? statusTranslate[statuses["[2] [BioForge: GenLang]"]] as string
                     : ""}`}
                 >
                   <div className="service b" />
                 </div>
                 <div
-                  className={`service-status o-cell ${statuses["0BCA5"]
-                    ? statusTranslate[statuses["0BCA5"]] as string
+                  className={`service-status o-cell ${statuses["[3] [SmartHome]"]
+                    ? statusTranslate[statuses["[3] [SmartHome]"]] as string
                     : ""}`}
                 >
                   <div className="service o" />

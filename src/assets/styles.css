@@ -20,7 +20,7 @@ html, body, #root {
     justify-content: center;
     align-items: flex-start;
     gap: 40px;
-    padding-bottom: 25px;
+    /* padding-bottom: 25px; */
 }
 
 img {
@@ -347,7 +347,7 @@ background-image: none;
 }
 
 .team5 .logo-cell {
-    background-image: url("../assets/teamlogos/meows2.png");
+    background-image: url("../assets/teamlogos/meows.png");
     background-position: center;
 }
 

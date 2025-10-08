@@ -2,7 +2,8 @@
 export type TeamServiceStatus = 101 | 102 | 103 | 104 | 110;
 
 export type ServiceData = {
-  serv_name: "V.B0ARD" | "B0i1RUM" | "0BCA5" | "SMR+B1BNC" | "CTR1PANEL";
+  // serv_name: "V.B0ARD" | "B0i1RUM" | "0BCA5" | "SMR+B1BNC" | "CTR1PANEL";
+  serv_name: "VibeAura" | "BioForge" | "SmartHome" | "SleepCaps" | "SKUDS";
   serv_status: TeamServiceStatus;
 };
 
@@ -34,15 +35,15 @@ export const mockData: ServerResponse = {
       team_name: "t3amw1pe",
       team_pos: 1,
       ServData: [
-        { serv_name: "V.B0ARD", serv_status: 101 },
-        { serv_name: "B0i1RUM", serv_status: 101 },
-        { serv_name: "0BCA5", serv_status: 102 },
-        { serv_name: "SMR+B1BNC", serv_status: 101 },
-        { serv_name: "CTR1PANEL", serv_status: 103 }
+        { serv_name: "VibeAura", serv_status: 101 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 102 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 103 }
       ],
       AttackData: [
-        { victeam_id: 2, victeam_name: "BBhunt3rs", victeam_cflag: 1 },
-        { victeam_id: 5, victeam_name: "Data361", victeam_cflag: 1 }
+        { victeam_id: 2, victeam_name: "M3d03d", victeam_cflag: 1 },
+        { victeam_id: 5, victeam_name: "MeOow5_T3aM_CaT5", victeam_cflag: 1 }
       ]
     },
     {
@@ -50,15 +51,15 @@ export const mockData: ServerResponse = {
       team_name: "BBhunt3rs",
       team_pos: 2,
       ServData: [
-        { serv_name: "V.B0ARD", serv_status: 101 },
-        { serv_name: "B0i1RUM", serv_status: 102 },
-        { serv_name: "0BCA5", serv_status: 101 },
-        { serv_name: "SMR+B1BNC", serv_status: 104 },
-        { serv_name: "CTR1PANEL", serv_status: 101 }
+        { serv_name: "VibeAura", serv_status: 101 },
+        { serv_name: "BioForge", serv_status: 102 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 104 },
+        { serv_name: "SKUDS", serv_status: 101 }
       ],
       AttackData: [
-        { victeam_id: 3, victeam_name: "TA-57", victeam_cflag: 1 },
-        { victeam_id: 7, victeam_name: "Sorokin_team", victeam_cflag: 1 }
+        { victeam_id: 3, victeam_name: "Some0neCyberS", victeam_cflag: 1 },
+        { victeam_id: 7, victeam_name: "JIEBOE_yXO", victeam_cflag: 1 }
       ]
     },
     {
@@ -66,15 +67,15 @@ export const mockData: ServerResponse = {
       team_name: "TA-57",
       team_pos: 3,
       ServData: [
-        { serv_name: "V.B0ARD", serv_status: 103 },
-        { serv_name: "B0i1RUM", serv_status: 101 },
-        { serv_name: "0BCA5", serv_status: 101 },
-        { serv_name: "SMR+B1BNC", serv_status: 101 },
-        { serv_name: "CTR1PANEL", serv_status: 102 }
+        { serv_name: "VibeAura", serv_status: 103 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 102 }
       ],
       AttackData: [
-        { victeam_id: 1, victeam_name: "t3amw1pe", victeam_cflag: 1 },
-        { victeam_id: 4, victeam_name: "Cringe4Shell", victeam_cflag: 1 }
+        { victeam_id: 1, victeam_name: "T3amW1pe", victeam_cflag: 1 },
+        { victeam_id: 4, victeam_name: "RedFlagRadar", victeam_cflag: 1 }
       ]
     },
     {
@@ -82,15 +83,15 @@ export const mockData: ServerResponse = {
       team_name: "Cringe4Shell",
       team_pos: 4,
       ServData: [
-        { serv_name: "V.B0ARD", serv_status: 101 },
-        { serv_name: "B0i1RUM", serv_status: 104 },
-        { serv_name: "0BCA5", serv_status: 101 },
-        { serv_name: "SMR+B1BNC", serv_status: 101 },
-        { serv_name: "CTR1PANEL", serv_status: 101 }
+        { serv_name: "VibeAura", serv_status: 101 },
+        { serv_name: "BioForge", serv_status: 104 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
       ],
       AttackData: [
-        { victeam_id: 6, victeam_name: "SIGWIN", victeam_cflag: 1 },
-        { victeam_id: 8, victeam_name: "CSLab", victeam_cflag: 1 }
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 },
+        { victeam_id: 8, victeam_name: "AppSECeRS", victeam_cflag: 1 }
       ]
     },
     {
@@ -98,15 +99,15 @@ export const mockData: ServerResponse = {
       team_name: "Data361",
       team_pos: 5,
       ServData: [
-        { serv_name: "V.B0ARD", serv_status: 102 },
-        { serv_name: "B0i1RUM", serv_status: 101 },
-        { serv_name: "0BCA5", serv_status: 103 },
-        { serv_name: "SMR+B1BNC", serv_status: 101 },
-        { serv_name: "CTR1PANEL", serv_status: 101 }
+        { serv_name: "VibeAura", serv_status: 102 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 103 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
       ],
       AttackData: [
-        { victeam_id: 2, victeam_name: "BBhunt3rs", victeam_cflag: 1 },
-        { victeam_id: 9, victeam_name: "CryptoHUB", victeam_cflag: 1 }
+        { victeam_id: 2, victeam_name: "M3d03d", victeam_cflag: 1 },
+        { victeam_id: 9, victeam_name: "TA57", victeam_cflag: 1 }
       ]
     },
     {
@@ -114,15 +115,15 @@ export const mockData: ServerResponse = {
       team_name: "SIGWIN",
       team_pos: 6,
       ServData: [
-        { serv_name: "V.B0ARD", serv_status: 101 },
-        { serv_name: "B0i1RUM", serv_status: 101 },
-        { serv_name: "0BCA5", serv_status: 101 },
-        { serv_name: "SMR+B1BNC", serv_status: 102 },
-        { serv_name: "CTR1PANEL", serv_status: 103 }
+        { serv_name: "VibeAura", serv_status: 101 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 102 },
+        { serv_name: "SKUDS", serv_status: 103 }
       ],
       AttackData: [
-        { victeam_id: 4, victeam_name: "Cringe4Shell", victeam_cflag: 1 },
-        { victeam_id: 10, victeam_name: "S0me0neCyberS", victeam_cflag: 1 }
+        { victeam_id: 4, victeam_name: "RedFlagRadar", victeam_cflag: 1 },
+        { victeam_id: 10, victeam_name: "Cringe4Shell", victeam_cflag: 1 }
       ]
     },
     {
@@ -130,15 +131,15 @@ export const mockData: ServerResponse = {
       team_name: "Sorokin_team",
       team_pos: 7,
       ServData: [
-        { serv_name: "V.B0ARD", serv_status: 104 },
-        { serv_name: "B0i1RUM", serv_status: 101 },
-        { serv_name: "0BCA5", serv_status: 101 },
-        { serv_name: "SMR+B1BNC", serv_status: 101 },
-        { serv_name: "CTR1PANEL", serv_status: 101 }
+        { serv_name: "VibeAura", serv_status: 104 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
       ],
       AttackData: [
-        { victeam_id: 2, victeam_name: "BBhunt3rs", victeam_cflag: 1 },
-        { victeam_id: 11, victeam_name: "GPT_in_team", victeam_cflag: 1 }
+        { victeam_id: 2, victeam_name: "M3d03d", victeam_cflag: 1 },
+        { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 }
       ]
     },
     {
@@ -146,15 +147,15 @@ export const mockData: ServerResponse = {
       team_name: "CSLab",
       team_pos: 8,
       ServData: [
-        { serv_name: "V.B0ARD", serv_status: 101 },
-        { serv_name: "B0i1RUM", serv_status: 103 },
-        { serv_name: "0BCA5", serv_status: 101 },
-        { serv_name: "SMR+B1BNC", serv_status: 101 },
-        { serv_name: "CTR1PANEL", serv_status: 101 }
+        { serv_name: "VibeAura", serv_status: 101 },
+        { serv_name: "BioForge", serv_status: 103 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
       ],
       AttackData: [
-        { victeam_id: 4, victeam_name: "Cringe4Shell", victeam_cflag: 1 },
-        { victeam_id: 12, victeam_name: "DirtyPipe", victeam_cflag: 1 }
+        { victeam_id: 4, victeam_name: "RedFlagRadar", victeam_cflag: 1 },
+        { victeam_id: 12, victeam_name: "BI.ZONE Team", victeam_cflag: 1 }
       ]
     },
     {
@@ -162,15 +163,15 @@ export const mockData: ServerResponse = {
       team_name: "CryptoHUB",
       team_pos: 9,
       ServData: [
-        { serv_name: "V.B0ARD", serv_status: 101 },
-        { serv_name: "B0i1RUM", serv_status: 101 },
-        { serv_name: "0BCA5", serv_status: 102 },
-        { serv_name: "SMR+B1BNC", serv_status: 101 },
-        { serv_name: "CTR1PANEL", serv_status: 101 }
+        { serv_name: "VibeAura", serv_status: 101 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 102 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
       ],
       AttackData: [
-        { victeam_id: 5, victeam_name: "Data361", victeam_cflag: 1 },
-        { victeam_id: 13, victeam_name: "Fail2ban", victeam_cflag: 1 }
+        { victeam_id: 5, victeam_name: "MeOow5_T3aM_CaT5", victeam_cflag: 1 },
+        { victeam_id: 13, victeam_name: "SEC.T.A.", victeam_cflag: 1 }
       ]
     },
     {
@@ -178,15 +179,15 @@ export const mockData: ServerResponse = {
       team_name: "S0me0neCyberS",
       team_pos: 10,
       ServData: [
-        { serv_name: "V.B0ARD", serv_status: 102 },
-        { serv_name: "B0i1RUM", serv_status: 101 },
-        { serv_name: "0BCA5", serv_status: 101 },
-        { serv_name: "SMR+B1BNC", serv_status: 103 },
-        { serv_name: "CTR1PANEL", serv_status: 101 }
+        { serv_name: "VibeAura", serv_status: 102 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 103 },
+        { serv_name: "SKUDS", serv_status: 101 }
       ],
       AttackData: [
-        { victeam_id: 6, victeam_name: "SIGWIN", victeam_cflag: 1 },
-        { victeam_id: 14, victeam_name: "f1agsR3AP3RS", victeam_cflag: 1 }
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 },
+        { victeam_id: 14, victeam_name: "Assume Birc", victeam_cflag: 1 }
       ]
     },
     {
@@ -194,15 +195,15 @@ export const mockData: ServerResponse = {
       team_name: "GPT_in_team",
       team_pos: 11,
       ServData: [
-        { serv_name: "V.B0ARD", serv_status: 101 },
-        { serv_name: "B0i1RUM", serv_status: 104 },
-        { serv_name: "0BCA5", serv_status: 101 },
-        { serv_name: "SMR+B1BNC", serv_status: 101 },
-        { serv_name: "CTR1PANEL", serv_status: 101 }
+        { serv_name: "VibeAura", serv_status: 101 },
+        { serv_name: "BioForge", serv_status: 104 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
       ],
       AttackData: [
-        { victeam_id: 7, victeam_name: "Sorokin_team", victeam_cflag: 1 },
-        { victeam_id: 15, victeam_name: "OKKO", victeam_cflag: 1 }
+        { victeam_id: 7, victeam_name: "JIEBOE_yXO", victeam_cflag: 1 },
+        { victeam_id: 15, victeam_name: "IskIn", victeam_cflag: 1 }
       ]
     },
     {
@@ -210,15 +211,15 @@ export const mockData: ServerResponse = {
       team_name: "DirtyPipe",
       team_pos: 12,
       ServData: [
-        { serv_name: "V.B0ARD", serv_status: 103 },
-        { serv_name: "B0i1RUM", serv_status: 101 },
-        { serv_name: "0BCA5", serv_status: 101 },
-        { serv_name: "SMR+B1BNC", serv_status: 101 },
-        { serv_name: "CTR1PANEL", serv_status: 102 }
+        { serv_name: "VibeAura", serv_status: 103 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 102 }
       ],
       AttackData: [
-        { victeam_id: 8, victeam_name: "CSLab", victeam_cflag: 1 },
-        { victeam_id: 1, victeam_name: "t3amw1pe", victeam_cflag: 1 }
+        { victeam_id: 8, victeam_name: "AppSECeRS", victeam_cflag: 1 },
+        { victeam_id: 1, victeam_name: "T3amW1pe", victeam_cflag: 1 }
       ]
     },
     {
@@ -226,15 +227,15 @@ export const mockData: ServerResponse = {
       team_name: "Fail2ban",
       team_pos: 13,
       ServData: [
-        { serv_name: "V.B0ARD", serv_status: 101 },
-        { serv_name: "B0i1RUM", serv_status: 101 },
-        { serv_name: "0BCA5", serv_status: 104 },
-        { serv_name: "SMR+B1BNC", serv_status: 101 },
-        { serv_name: "CTR1PANEL", serv_status: 101 }
+        { serv_name: "VibeAura", serv_status: 101 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 104 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
       ],
       AttackData: [
-        { victeam_id: 9, victeam_name: "CryptoHUB", victeam_cflag: 1 },
-        { victeam_id: 3, victeam_name: "TA-57", victeam_cflag: 1 }
+        { victeam_id: 9, victeam_name: "TA57", victeam_cflag: 1 },
+        { victeam_id: 3, victeam_name: "Some0neCyberS", victeam_cflag: 1 }
       ]
     },
     {
@@ -242,15 +243,15 @@ export const mockData: ServerResponse = {
       team_name: "f1agsR3AP3RS",
       team_pos: 14,
       ServData: [
-        { serv_name: "V.B0ARD", serv_status: 101 },
-        { serv_name: "B0i1RUM", serv_status: 102 },
-        { serv_name: "0BCA5", serv_status: 101 },
-        { serv_name: "SMR+B1BNC", serv_status: 101 },
-        { serv_name: "CTR1PANEL", serv_status: 101 }
+        { serv_name: "VibeAura", serv_status: 101 },
+        { serv_name: "BioForge", serv_status: 102 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
       ],
       AttackData: [
-        { victeam_id: 10, victeam_name: "S0me0neCyberS", victeam_cflag: 1 },
-        { victeam_id: 5, victeam_name: "Data361", victeam_cflag: 1 }
+        { victeam_id: 10, victeam_name: "Cringe4Shell", victeam_cflag: 1 },
+        { victeam_id: 5, victeam_name: "MeOow5_T3aM_CaT5", victeam_cflag: 1 }
       ]
     },
     {
@@ -258,15 +259,15 @@ export const mockData: ServerResponse = {
       team_name: "OKKO",
       team_pos: 15,
       ServData: [
-        { serv_name: "V.B0ARD", serv_status: 110 },
-        { serv_name: "B0i1RUM", serv_status: 101 },
-        { serv_name: "0BCA5", serv_status: 101 },
-        { serv_name: "SMR+B1BNC", serv_status: 101 },
-        { serv_name: "CTR1PANEL", serv_status: 101 }
+        { serv_name: "VibeAura", serv_status: 110 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
       ],
       AttackData: [
-        { victeam_id: 11, victeam_name: "GPT_in_team", victeam_cflag: 1 },
-        { victeam_id: 6, victeam_name: "SIGWIN", victeam_cflag: 1 }
+        { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 },
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 }
       ]
     }
   ]

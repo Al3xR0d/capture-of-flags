@@ -8,7 +8,7 @@ import { Shield } from "./Shield.tsx";
 type TeamServiceStatus = 101 | 102 | 103 | 104 | 110;
 
 type ServiceData = {
-  serv_name: "[1] [VibeAura]" | "[2] [BioForge: GenLang]" | "[3] [SmartHome]" | "[4] [SleepCaps]" | "[5] [SKUDS]";
+  serv_name: "VibeAura" | "BioForge" | "SmartHome" | "SleepCaps" | "SKUDS";
   serv_status: TeamServiceStatus;
 };
 
@@ -457,36 +457,36 @@ export default function MainScreen() {
                   {teamNames[idx] || ""}
                 </p>
                 <div
-                  className={`service-status v-cell ${statuses["[1] [VibeAura]"]
-                    ? statusTranslate[statuses["[1] [VibeAura]"]] as string
+                  className={`service-status v-cell ${statuses["VibeAura"]
+                    ? statusTranslate[statuses["VibeAura"]] as string
                     : ""}`}
                 >
                   <div className="service v" />
                 </div>
                 <div
-                  className={`service-status c-cell ${statuses["[5] [SKUDS]"]
-                    ? statusTranslate[statuses["[5] [SKUDS]"]] as string
+                  className={`service-status c-cell ${statuses["SKUDS"]
+                    ? statusTranslate[statuses["SKUDS"]] as string
                     : ""}`}
                 >
                   <div className="service c" />
                 </div>
                 <div
-                  className={`service-status s-cell ${statuses["[4] [SleepCaps]"]
-                    ? statusTranslate[statuses["[4] [SleepCaps]"]] as string
+                  className={`service-status s-cell ${statuses["SleepCaps"]
+                    ? statusTranslate[statuses["SleepCaps"]] as string
                     : ""}`}
                 >
                   <div className="service s" />
                 </div>
                 <div
-                  className={`service-status b-cell ${statuses["[2] [BioForge: GenLang]"]
-                    ? statusTranslate[statuses["[2] [BioForge: GenLang]"]] as string
+                  className={`service-status b-cell ${statuses["BioForge"]
+                    ? statusTranslate[statuses["BioForge"]] as string
                     : ""}`}
                 >
                   <div className="service b" />
                 </div>
                 <div
-                  className={`service-status o-cell ${statuses["[3] [SmartHome]"]
-                    ? statusTranslate[statuses["[3] [SmartHome]"]] as string
+                  className={`service-status o-cell ${statuses["SmartHome"]
+                    ? statusTranslate[statuses["SmartHome"]] as string
                     : ""}`}
                 >
                   <div className="service o" />

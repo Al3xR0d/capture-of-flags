@@ -49,7 +49,11 @@ type ShieldData = {
   addedAtMs?: number;
 };
 
+// Новый тип для данных щитов с сервера
+type ServerShieldResponse = Record<string, boolean>;
+
 const serverIp = "http://10.62.0.120:8000/ctfdata/";
+const shieldServerIp = "http://10.62.0.120:8000/shields/"; // Новый эндпойнт для щитов
 
 const statusTranslate: Record<TeamServiceStatus, string> = {
   101: "green-status",
@@ -96,6 +100,12 @@ const getTeamCenter = (teamId: number) => {
   return { x: base.x + off.x, y: base.y + off.y };
 };
 
+// Функция для извлечения ID команды из строки "team-X"
+const extractTeamIdFromShieldKey = (key: string): number | null => {
+  const match = key.match(/^team-(\d+)$/);
+  return match ? parseInt(match[1], 10) : null;
+};
+
 export default function MainScreen() {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLHeadingElement | null>(null);
@@ -103,20 +113,24 @@ export default function MainScreen() {
   const rightLegendRef = useRef<HTMLImageElement | null>(null);
   const [round, setRound] = useState<number>(0);
   const [scale, setScale] = useState<number>(1);
-  const [useMockData, setUseMockData] = useState<boolean>(false); // Переключатель для моковых данных
+  const [useMockData] = useState<boolean>(false); // Переключатель для моковых данных
+  const [useTestShieldData] = useState<boolean>(false); // Переключатель для тестовых данных щитов
   const [teamStatuses, setTeamStatuses] = useState<
     Record<number, Partial<Record<ServiceData["serv_name"], TeamServiceStatus>>>
   >({});
   const [arrows, setArrows] = useState<ArrowData[]>([]);
   const [shields, setShields] = useState<ShieldData[]>([]);
+  const [serverShieldData, setServerShieldData] = useState<ServerShieldResponse>({});
   const [nowMs, setNowMs] = useState<number>(Date.now());
+  // const [lastGoodResponse, setLastGoodResponse] = useState<ServerResponse | null>(null);
+  // const [hasError, setHasError] = useState(false);
   const ROUND_MS = 60000;
   const ATTACK_MS = 40000;
   const DEFENSE_MS = ROUND_MS - ATTACK_MS;
   const ARROW_TTL_MS = 4000; // время жизни стрелки
   const SHIELD_TTL_MS = 3000; // время жизни одного импульса щита
   const ARROW_STOP_BEFORE_PX = 0; // отступ наконечника до цели
-  const [lastVictimTeamIds, setLastVictimTeamIds] = useState<number[]>([]);
+  // const [lastVictimTeamIds, setLastVictimTeamIds] = useState<number[]>([]);
 
   const timeInRound = nowMs % ROUND_MS;
   const isAttackPhase = timeInRound < ATTACK_MS;
@@ -164,6 +178,33 @@ export default function MainScreen() {
     updateScale();
     window.addEventListener("resize", updateScale);
 
+    const getShieldData = async () => {
+      if (useTestShieldData) {
+        // Используем тестовые данные
+        const testData = {
+          "team-1": true,   // Команда 1 должна показывать щит
+          "team-3": false,  // Команда 3 не должна показывать щит
+          "team-4": true,   // Команда 4 должна показывать щит
+          "team-7": true,   // Команда 7 должна показывать щит
+          "team-12": false, // Команда 12 не должна показывать щит
+          "team-15": true   // Команда 15 должна показывать щит
+        };
+        console.log("Используем тестовые данные щитов:", testData);
+        setServerShieldData(testData);
+        return;
+      }
+
+      try {
+        const response = await axios.get<ServerShieldResponse>(shieldServerIp);
+        console.log("Данные щитов с сервера:", response.data);
+        setServerShieldData(response.data);
+      } catch (error) {
+        console.error("Ошибка запроса данных щитов: ", error);
+        // В случае ошибки оставляем пустой объект
+        setServerShieldData({});
+      }
+    };
+
     const getUpdate = async () => {
       // Локальная фаза раунда (без зависимости от состояния)
       const now = Date.now();
@@ -208,13 +249,13 @@ export default function MainScreen() {
           return next;
         });
 
-        const victims: number[] = [];
-        teams.forEach(team => {
-          team.AttackData.forEach(attack => {
-            victims.push(attack.victeam_id);
-          });
-        });
-        setLastVictimTeamIds(Array.from(new Set(victims)));
+        // const victims: number[] = [];
+        // teams.forEach(team => {
+        //   team.AttackData.forEach(attack => {
+        //     victims.push(attack.victeam_id);
+        //   });
+        // });
+        // setLastVictimTeamIds(Array.from(new Set(victims)));
 
         // Планируем стрелки только в фазе атаки
         if (isAttackPhaseLocal) {
@@ -307,28 +348,41 @@ export default function MainScreen() {
 
     const tickId = window.setInterval(() => setNowMs(Date.now()), 200);
     const pollId = window.setInterval(getUpdate, ROUND_MS);
+    const shieldPollId = window.setInterval(getShieldData, 5000); // Обновляем данные щитов каждые 5 секунд
     getUpdate();
+    getShieldData(); // Получаем данные щитов при первом запуске
 
     return () => {
       window.clearInterval(pollId);
       window.clearInterval(tickId);
+      window.clearInterval(shieldPollId);
       window.removeEventListener("resize", updateScale);
     };
-  }, [useMockData]);
+  }, [useMockData, useTestShieldData]);
 
-  // Переключение фаз: в защитной фазе показываем щиты у последних жертв
+  // Переключение фаз: в защитной фазе показываем щиты на основе данных с сервера
   useEffect(() => {
     // Этот эффект реагирует только на смену фазы
     if (isAttackPhase) {
       setShields([]);
       return;
     }
-    // Фаза защиты: убираем стрелки, показываем импульсы щита
+    // Фаза защиты: убираем стрелки, показываем импульсы щита на основе данных с сервера
     setArrows([]);
+    
+    // Получаем список команд, которым нужно показывать щиты
+    const teamsWithShields = Object.entries(serverShieldData)
+      .filter(([, shouldShow]) => shouldShow)
+      .map(([key]) => extractTeamIdFromShieldKey(key))
+      .filter((teamId): teamId is number => teamId !== null);
+    
+    console.log("Команды с щитами:", teamsWithShields);
+
     const msIntoDefense = timeInRound - ATTACK_MS;
     const msLeftDefense = Math.max(0, DEFENSE_MS - msIntoDefense);
     const pulsesPerTeam = 3;
-    lastVictimTeamIds.forEach(teamId => {
+    
+    teamsWithShields.forEach(teamId => {
       for (let i = 0; i < pulsesPerTeam; i++) {
         const delay = Math.random() * msLeftDefense;
         const id = `${teamId}-shield-${Date.now()}-${i}-${Math.random()}`;
@@ -341,7 +395,7 @@ export default function MainScreen() {
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAttackPhase]);
+  }, [isAttackPhase, serverShieldData]);
 
   // Периодическая чистка просроченных стрелок и щитов, чтобы не зависали
   useEffect(() => {
@@ -363,6 +417,15 @@ export default function MainScreen() {
         {/* <div className={`phase-badge ${isAttackPhase ? 'attack' : 'defense'}`}>
           {isAttackPhase ? 'АТАКА' : 'ЗАЩИТА'}
         </div> */}
+          {/* <label style={{ color: 'white', fontSize: '14px' }}>
+            <input
+              type="checkbox"
+              checked={useTestShieldData}
+              onChange={(e) => setUseTestShieldData(e.target.checked)}
+              style={{ marginRight: '5px' }}
+            />
+            Тестовые данные щитов
+          </label> */}
           {/* <label style={{ color: 'white', fontSize: '14px' }}>
             <input
               type="checkbox"

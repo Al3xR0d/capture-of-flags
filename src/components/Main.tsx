@@ -49,7 +49,6 @@ type ShieldData = {
   addedAtMs?: number;
 };
 
-// Новый тип для данных щитов с сервера
 type ServerShieldResponse = Record<string, boolean>;
 
 const serverIp = "http://10.62.0.120:8000/ctfdata/";
@@ -81,8 +80,6 @@ const flagOffsets = [
   { x: 460, y: 88 }
 ];
 
-// Сместить координаты к центру центрального гекса спрайтов type-1/2/3
-// Значения подобраны эмпирически относительно left/top блока .team (126x100)
 const typeCenterOffset: Record<1 | 2 | 3, { x: number; y: number }> = {
   1: { x: 5, y: 10 },
   2: { x: 5, y: 10 },
@@ -100,7 +97,6 @@ const getTeamCenter = (teamId: number) => {
   return { x: base.x + off.x, y: base.y + off.y };
 };
 
-// Функция для извлечения ID команды из строки "team-X"
 const extractTeamIdFromShieldKey = (key: string): number | null => {
   const match = key.match(/^team-(\d+)$/);
   return match ? parseInt(match[1], 10) : null;
@@ -114,7 +110,7 @@ export default function MainScreen() {
   const [round, setRound] = useState<number>(0);
   const [scale, setScale] = useState<number>(1);
   const [useMockData] = useState<boolean>(false); // Переключатель для моковых данных
-  const [useTestShieldData] = useState<boolean>(false); // Переключатель для тестовых данных щитов
+  const [useTestShieldData] = useState<boolean>(false); // Переключатель для моковых данных щитов
   const [teamStatuses, setTeamStatuses] = useState<
     Record<number, Partial<Record<ServiceData["serv_name"], TeamServiceStatus>>>
   >({});
@@ -127,6 +123,7 @@ export default function MainScreen() {
   const [previousRound, setPreviousRound] = useState<number>(0);
   const [showAttackText, setShowAttackText] = useState<boolean>(true);
   const [attackTextStartTime, setAttackTextStartTime] = useState<number>(Date.now());
+  const [teamsThatShowedShields, setTeamsThatShowedShields] = useState<Set<number>>(new Set());
   const ROUND_MS = 60000;
   const ATTACK_MS = 40000;
   const DEFENSE_MS = ROUND_MS - ATTACK_MS;
@@ -180,7 +177,7 @@ export default function MainScreen() {
 
     const getShieldData = async () => {
       if (useTestShieldData) {
-        // Используем тестовые данные
+        // тестовые данные для щитов
         const testData = {
           "team-1": true,   // Команда 1 должна показывать щит
           "team-3": false,  // Команда 3 не должна показывать щит
@@ -200,13 +197,12 @@ export default function MainScreen() {
         setServerShieldData(response.data);
       } catch (error) {
         console.error("Ошибка запроса данных щитов: ", error);
-        // В случае ошибки оставляем пустой объект
         setServerShieldData({});
       }
     };
 
     const getUpdate = async () => {
-      // Очищаем все существующие стрелки и щиты при начале нового запроса
+      // очистка всех существующих стрелок и щитов при начале нового запроса
       setArrows([]);
       setShields([]);
       
@@ -214,18 +210,17 @@ export default function MainScreen() {
         let response: ServerResponse | MockServerResponse;
         
         if (useMockData) {
-          // Используем моковые данные
+          // моки
           response = getRandomMockData();
 
      
         } else {
-          // Используем реальный API
+          // реальный API
           const apiResponse = await axios.get<ServerResponse>(serverIp);
           response = apiResponse.data;
         
         }
         
-        // Обновляем раунд
         setRound(response.NumRound);
         const teams = response.TeamData;
         setTeamStatuses(prev => {
@@ -246,15 +241,6 @@ export default function MainScreen() {
           return next;
         });
 
-        // const victims: number[] = [];
-        // teams.forEach(team => {
-        //   team.AttackData.forEach(attack => {
-        //     victims.push(attack.victeam_id);
-        //   });
-        // });
-        // setLastVictimTeamIds(Array.from(new Set(victims)));
-
-        // Планируем стрелки только когда показывается надпись АТАКА
         if (showAttackText && attackTextStartTime > 0) {
           const elapsed = Date.now() - attackTextStartTime;
           const msLeft = Math.max(0, ATTACK_MS - elapsed);
@@ -266,48 +252,6 @@ export default function MainScreen() {
         }
       } catch (error) {
         console.error("Ошибка запроса: ", error);
-        // В случае ошибки используем моковые данные как fallback
-
-        // УБРАТЬ МОКОВЫЕ ДАННЫЕ В СЛУЧАЕ ОШИБКИ 
-
-        // if (!useMockData) {
-        //   const fallbackData = getRandomMockData();
-        //   setRound(fallbackData.NumRound);
-        //   const teams = fallbackData.TeamData;
-        //   setTeamStatuses(prev => {
-        //     const next: Record<
-        //       number,
-        //       Partial<Record<ServiceData["serv_name"], TeamServiceStatus>>
-        //     > = { ...prev };
-        //     teams.forEach(team => {
-        //       const statuses: Partial<
-        //         Record<ServiceData["serv_name"], TeamServiceStatus>
-        //       > = { ...next[team.team_id] };
-        //       team.ServData.forEach(service => {
-        //         statuses[service.serv_name] = service.serv_status;
-        //       });
-        //       next[team.team_id] = statuses;
-        //     });
-        //     return next;
-        //   });
-
-        //   const victims: number[] = [];
-        //   teams.forEach(team => {
-        //     team.AttackData.forEach(attack => {
-        //       victims.push(attack.victeam_id);
-        //     });
-        //   });
-        //   setLastVictimTeamIds(Array.from(new Set(victims)));
-
-        //   if (isAttackPhaseLocal) {
-        //     const msLeft = ATTACK_MS - (timeInRoundLocal % ATTACK_MS);
-        //     teams.forEach(team => {
-        //       team.AttackData.forEach(attack => {
-        //         createArrow(team.team_id, attack.victeam_id, attack.victeam_cflag, msLeft);
-        //       });
-        //     });
-        //   }
-        // }
       }
     };
 
@@ -317,8 +261,8 @@ export default function MainScreen() {
       flagCount: number,
       maxDelayMs: number
     ) => {
-      const startTime = Math.random() * Math.max(0, maxDelayMs); // задержка в пределах фазы атаки
-      const ttlMs = ARROW_TTL_MS; // время жизни стрелки после появления
+      const startTime = Math.random() * Math.max(0, maxDelayMs);
+      const ttlMs = ARROW_TTL_MS;
       
       const arrowId = `${fromTeamId}-${toTeamId}-${Date.now()}`;
       
@@ -331,24 +275,21 @@ export default function MainScreen() {
         endTime: ttlMs
       };
 
-      // Добавляем стрелку с задержкой
+      // стрелка с задержкой
       setTimeout(() => {
         const appearedAt = Date.now();
         setArrows(prev => [...prev, { ...newArrow, addedAtMs: appearedAt }]);
-        // Жёсткое удаление по TTL на случай пропуска периодической чистки
         setTimeout(() => {
           setArrows(prev => prev.filter(arrow => arrow.id !== arrowId));
         }, ttlMs + 300);
       }, startTime);
     };
 
-    // DOM-манипуляции для статусов заменены на управление через состояние в JSX ниже
-
     const tickId = window.setInterval(() => setNowMs(Date.now()), 200);
     const pollId = window.setInterval(getUpdate, ROUND_MS);
-    const shieldPollId = window.setInterval(getShieldData, ROUND_MS); // Обновляем данные щитов каждые 5 секунд
+    const shieldPollId = window.setInterval(getShieldData, ROUND_MS);
     getUpdate();
-    getShieldData(); // Получаем данные щитов при первом запуске
+    getShieldData();
 
     return () => {
       window.clearInterval(pollId);
@@ -359,17 +300,15 @@ export default function MainScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [useMockData, useTestShieldData]);
 
-  // Переключение фаз: в защитной фазе показываем щиты на основе данных с сервера
+  // Переключение фаз
   useEffect(() => {
-    // Этот эффект реагирует только на смену фазы
     if (showAttackText) {
       setShields([]);
       return;
     }
-    // Фаза защиты: убираем стрелки, показываем импульсы щита на основе данных с сервера
     setArrows([]);
+    setTeamsThatShowedShields(new Set());
     
-    // Получаем список команд, которым нужно показывать щиты
     const teamsWithShields = Object.entries(serverShieldData)
       .filter(([, shouldShow]) => shouldShow)
       .map(([key]) => extractTeamIdFromShieldKey(key))
@@ -377,30 +316,35 @@ export default function MainScreen() {
     
     console.log("Команды с щитами:", teamsWithShields);
 
+    const teamsToShowShields = teamsWithShields.filter(teamId => 
+      !teamsThatShowedShields.has(teamId)
+    );
+
+    console.log("Команды для показа щитов:", teamsToShowShields);
+
     const elapsed = Date.now() - attackTextStartTime;
     const msLeftDefense = Math.max(0, DEFENSE_MS - (elapsed - ATTACK_MS));
-    const pulsesPerTeam = 3;
     
-    teamsWithShields.forEach(teamId => {
-      for (let i = 0; i < pulsesPerTeam; i++) {
-        const delay = Math.random() * msLeftDefense;
-        const id = `${teamId}-shield-${Date.now()}-${i}-${Math.random()}`;
-        setTimeout(() => {
-          setShields(prev => [
-            ...prev,
-            { id, teamId, startTime: delay, endTime: SHIELD_TTL_MS, addedAtMs: Date.now() }
-          ]);
-        }, delay);
-      }
+    teamsToShowShields.forEach(teamId => {
+      // только один щит для каждой команды
+      const delay = Math.random() * msLeftDefense;
+      const id = `${teamId}-shield-${Date.now()}-${Math.random()}`;
+      setTimeout(() => {
+        setShields(prev => [
+          ...prev,
+          { id, teamId, startTime: delay, endTime: SHIELD_TTL_MS, addedAtMs: Date.now() }
+        ]);
+        setTeamsThatShowedShields(prev => new Set(prev).add(teamId));
+      }, delay);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showAttackText, serverShieldData]);
 
-  // Периодическая чистка просроченных стрелок и щитов, чтобы не зависали
+  // чистка просроченных стрелок и щитов, чтобы не зависали
   useEffect(() => {
     setArrows(prev => prev.filter(a => {
       if (!a.addedAtMs) return true;
-      return nowMs - a.addedAtMs <= a.endTime + 250; // небольшой буфер
+      return nowMs - a.addedAtMs <= a.endTime + 250;
     }));
     setShields(prev => prev.filter(s => {
       if (!s.addedAtMs) return true;
@@ -411,11 +355,10 @@ export default function MainScreen() {
   // Отслеживание смены раунда и показ надписи АТАКА
   useEffect(() => {
     if (round !== previousRound && previousRound !== 0) {
-      // Раунд изменился, показываем надпись АТАКА
       setShowAttackText(true);
       setAttackTextStartTime(Date.now());
+      setTeamsThatShowedShields(new Set());
     }
-    // Обновляем previousRound после проверки
     setPreviousRound(round);
   }, [round, previousRound]);
 
@@ -434,29 +377,6 @@ export default function MainScreen() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 id="roundNum" ref={headerRef}>{`Round ${round}`}</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        {/* <div className={`phase-badge ${isAttackPhase ? 'attack' : 'defense'}`}>
-          {isAttackPhase ? 'АТАКА' : 'ЗАЩИТА'}
-        </div> */}
-          {/* <label style={{ color: 'white', fontSize: '14px' }}>
-            <input
-              type="checkbox"
-              checked={useTestShieldData}
-              onChange={(e) => setUseTestShieldData(e.target.checked)}
-              style={{ marginRight: '5px' }}
-            />
-            Тестовые данные щитов
-          </label> */}
-          {/* <label style={{ color: 'white', fontSize: '14px' }}>
-            <input
-              type="checkbox"
-              checked={useMockData}
-              onChange={(e) => {
-                console.log(e.target)
-                setUseMockData(e.target.checked)}}
-              style={{ marginRight: '5px' }}
-            />
-            Использовать моковые данные
-          </label> */}
         </div>
       </div>
       <div className="flex">
@@ -472,8 +392,7 @@ export default function MainScreen() {
             style={{ transform: `scale(${scale})`, transformOrigin: "top left" }}
           >
           <div className="city" />
-          
-          {/* SVG контейнер для стрелок */}
+
           <svg
             className="arrows-container"
             style={{
@@ -504,7 +423,7 @@ export default function MainScreen() {
               );
             })}
           </svg>
-          {/* SVG контейнер для щитов */}
+
           <svg
             className="shields-container"
             style={{

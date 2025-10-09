@@ -1,4 +1,3 @@
-// Моковые данные для CTF дашборда
 export type TeamServiceStatus = 101 | 102 | 103 | 104 | 110;
 
 export type ServiceData = {
@@ -26,7 +25,6 @@ export type ServerResponse = {
   TeamData: TeamData[];
 };
 
-// Моковые данные
 export const mockData: ServerResponse = {
   NumRound: 42,
   TeamData: [

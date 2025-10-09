@@ -19,21 +19,21 @@ export const Arrow: React.FC<ArrowProps> = ({
   isAnimated = true,
   stopBeforePx = 10
 }) => {
-  // Вычисляем угол и длину стрелки
+  // угол и длина стрелки
   const deltaX = toX - fromX;
   const deltaY = toY - fromY;
-//   const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
   const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
 
   // Параметры стрелки
-  const strokeWidth = 7; // была 3
-  const headLength = 28; // было 15
-  const headWidth = 14; // было 8
+  const strokeWidth = 7;
+  const headLength = 28;
+  const headWidth = 14;
   
   // Смещение для отображения количества флагов
   const offsetY = flagCount > 1 ? (flagCount - 1) * 8 : 0;
 
-  // Предварительные вычисления координат для конца линии и точек наконечника
+  // вычисления координат для конца линии и точек наконечника
   const angleRad = angle * Math.PI / 180;
   const lineEndX = toX - (headLength + stopBeforePx) * Math.cos(angleRad);
   const lineEndY = toY - (headLength + stopBeforePx) * Math.sin(angleRad) + offsetY;
@@ -47,7 +47,6 @@ export const Arrow: React.FC<ArrowProps> = ({
 
   return (
     <g className={`arrow ${isAnimated ? 'animated' : ''}`}>
-      {/* Подложка (обводка) для основной линии */}
       <line
         x1={fromX}
         y1={fromY + offsetY}
@@ -58,7 +57,6 @@ export const Arrow: React.FC<ArrowProps> = ({
         strokeLinecap="round"
         className="arrow-line-outline"
       />
-      {/* Основная линия стрелки */}
       <line
         x1={fromX}
         y1={fromY + offsetY}
@@ -70,8 +68,6 @@ export const Arrow: React.FC<ArrowProps> = ({
         className="arrow-line"
       />
       
-      {/* Наконечник стрелки */}
-      {/* Обводка наконечника */}
       <polygon
         points={`${headTipX},${headTipY} ${headBaseLeftX},${headBaseLeftY} ${headBaseRightX},${headBaseRightY}`}
         fill="#000"
@@ -83,7 +79,6 @@ export const Arrow: React.FC<ArrowProps> = ({
         className="arrow-head"
       />
       
-      {/* Счетчик флагов */}
       {flagCount > 1 && (
         <>
           <circle

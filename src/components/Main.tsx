@@ -53,7 +53,7 @@ type ShieldData = {
 type ServerShieldResponse = Record<string, boolean>;
 
 const serverIp = "http://10.62.0.120:8000/ctfdata/";
-const shieldServerIp = "http://10.62.0.120:8000/shields/"; // Новый эндпойнт для щитов
+const shieldServerIp = "http://gitlabapps.ctflab.local:8080/ctf-backend/api/wazuh/activity";
 
 const statusTranslate: Record<TeamServiceStatus, string> = {
   101: "green-status",
@@ -124,6 +124,9 @@ export default function MainScreen() {
   const [nowMs, setNowMs] = useState<number>(Date.now());
   // const [lastGoodResponse, setLastGoodResponse] = useState<ServerResponse | null>(null);
   // const [hasError, setHasError] = useState(false);
+  const [previousRound, setPreviousRound] = useState<number>(0);
+  const [showAttackText, setShowAttackText] = useState<boolean>(true);
+  const [attackTextStartTime, setAttackTextStartTime] = useState<number>(Date.now());
   const ROUND_MS = 60000;
   const ATTACK_MS = 40000;
   const DEFENSE_MS = ROUND_MS - ATTACK_MS;
@@ -132,9 +135,6 @@ export default function MainScreen() {
   const ARROW_STOP_BEFORE_PX = 0; // отступ наконечника до цели
   // const [lastVictimTeamIds, setLastVictimTeamIds] = useState<number[]>([]);
 
-  const timeInRound = nowMs % ROUND_MS;
-  const isAttackPhase = timeInRound < ATTACK_MS;
-  
   const teamNames = useMemo(
     () => [
       "T3amW1pe",
@@ -206,10 +206,6 @@ export default function MainScreen() {
     };
 
     const getUpdate = async () => {
-      // Локальная фаза раунда (без зависимости от состояния)
-      const now = Date.now();
-      const timeInRoundLocal = now % ROUND_MS;
-      const isAttackPhaseLocal = timeInRoundLocal < ATTACK_MS;
       // Очищаем все существующие стрелки и щиты при начале нового запроса
       setArrows([]);
       setShields([]);
@@ -229,6 +225,7 @@ export default function MainScreen() {
         
         }
         
+        // Обновляем раунд
         setRound(response.NumRound);
         const teams = response.TeamData;
         setTeamStatuses(prev => {
@@ -257,9 +254,10 @@ export default function MainScreen() {
         // });
         // setLastVictimTeamIds(Array.from(new Set(victims)));
 
-        // Планируем стрелки только в фазе атаки
-        if (isAttackPhaseLocal) {
-          const msLeft = ATTACK_MS - (timeInRoundLocal % ATTACK_MS);
+        // Планируем стрелки только когда показывается надпись АТАКА
+        if (showAttackText && attackTextStartTime > 0) {
+          const elapsed = Date.now() - attackTextStartTime;
+          const msLeft = Math.max(0, ATTACK_MS - elapsed);
           teams.forEach(team => {
             team.AttackData.forEach(attack => {
               createArrow(team.team_id, attack.victeam_id, attack.victeam_cflag, msLeft);
@@ -348,7 +346,7 @@ export default function MainScreen() {
 
     const tickId = window.setInterval(() => setNowMs(Date.now()), 200);
     const pollId = window.setInterval(getUpdate, ROUND_MS);
-    const shieldPollId = window.setInterval(getShieldData, 5000); // Обновляем данные щитов каждые 5 секунд
+    const shieldPollId = window.setInterval(getShieldData, ROUND_MS); // Обновляем данные щитов каждые 5 секунд
     getUpdate();
     getShieldData(); // Получаем данные щитов при первом запуске
 
@@ -358,12 +356,13 @@ export default function MainScreen() {
       window.clearInterval(shieldPollId);
       window.removeEventListener("resize", updateScale);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [useMockData, useTestShieldData]);
 
   // Переключение фаз: в защитной фазе показываем щиты на основе данных с сервера
   useEffect(() => {
     // Этот эффект реагирует только на смену фазы
-    if (isAttackPhase) {
+    if (showAttackText) {
       setShields([]);
       return;
     }
@@ -378,8 +377,8 @@ export default function MainScreen() {
     
     console.log("Команды с щитами:", teamsWithShields);
 
-    const msIntoDefense = timeInRound - ATTACK_MS;
-    const msLeftDefense = Math.max(0, DEFENSE_MS - msIntoDefense);
+    const elapsed = Date.now() - attackTextStartTime;
+    const msLeftDefense = Math.max(0, DEFENSE_MS - (elapsed - ATTACK_MS));
     const pulsesPerTeam = 3;
     
     teamsWithShields.forEach(teamId => {
@@ -395,7 +394,7 @@ export default function MainScreen() {
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAttackPhase, serverShieldData]);
+  }, [showAttackText, serverShieldData]);
 
   // Периодическая чистка просроченных стрелок и щитов, чтобы не зависали
   useEffect(() => {
@@ -408,6 +407,27 @@ export default function MainScreen() {
       return nowMs - s.addedAtMs <= s.endTime + 250;
     }));
   }, [nowMs]);
+
+  // Отслеживание смены раунда и показ надписи АТАКА
+  useEffect(() => {
+    if (round !== previousRound && previousRound !== 0) {
+      // Раунд изменился, показываем надпись АТАКА
+      setShowAttackText(true);
+      setAttackTextStartTime(Date.now());
+    }
+    // Обновляем previousRound после проверки
+    setPreviousRound(round);
+  }, [round, previousRound]);
+
+  // Автоматическое скрытие надписи АТАКА через ATTACK_MS миллисекунд
+  useEffect(() => {
+    if (showAttackText && attackTextStartTime > 0) {
+      const elapsed = nowMs - attackTextStartTime;
+      if (elapsed >= ATTACK_MS) {
+        setShowAttackText(false);
+      }
+    }
+  }, [nowMs, showAttackText, attackTextStartTime, ATTACK_MS]);
 
   return (
     <div className="main">
@@ -466,7 +486,7 @@ export default function MainScreen() {
               zIndex: 20
             }}
           >
-            {isAttackPhase && arrows.map(arrow => {
+            {showAttackText && arrows.map(arrow => {
               const fromPos = getTeamCenter(arrow.fromTeamId);
               const toPos = getTeamCenter(arrow.toTeamId);
               
@@ -497,7 +517,7 @@ export default function MainScreen() {
               zIndex: 18
             }}
           >
-            {!isAttackPhase && shields.map(shield => {
+            {!showAttackText && shields.map(shield => {
               const pos = getTeamCenter(shield.teamId);
               return (
                 <Shield key={shield.id} cx={pos.x} cy={pos.y} radius={56} />
@@ -562,8 +582,8 @@ export default function MainScreen() {
         </div>
         <div className="attack-defence-container">
         <img className="legend legend-statuses" ref={rightLegendRef} src="/src/assets/legend_statuses.png" alt="" />
-        <div className={`phase-badge ${isAttackPhase ? 'attack' : 'defense'}`}>
-          {isAttackPhase ? 'АТАКА' : 'ЗАЩИТА'}
+        <div className={`phase-badge ${showAttackText ? 'attack' : 'defense'}`}>
+          {showAttackText ? 'АТАКА' : 'ЗАЩИТА'}
         </div>
         </div>
       </div>

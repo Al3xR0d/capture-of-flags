@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # React приложение (фронтенд)
+  dashboard-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ctf-dashboard-frontend
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - dashboard-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx reverse proxy (опционально, если нужен дополнительный уровень)
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: ctf-dashboard-proxy
+    ports:
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - dashboard-frontend
+    restart: unless-stopped
+    networks:
+      - dashboard-network
+    profiles:
+      - ssl  # Запускается только с профилем ssl
+
+  # Мониторинг логов (опционально)
+  log-monitor:
+    image: amir20/dozzle:latest
+    container_name: ctf-dashboard-logs
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+    networks:
+      - dashboard-network
+    profiles:
+      - monitoring  # Запускается только с профилем monitoring
+
+networks:
+  dashboard-network:
+    driver: bridge
+    name: ctf-dashboard-network
+
+volumes:
+  nginx-logs:
+    driver: local

@@ -380,7 +380,7 @@ export default function MainScreen() {
         </div>
       </div>
       <div className="flex">
-        <img className="legend legend-services" ref={leftLegendRef} src="/src/assets/legend_services.png" alt="" />
+        <img className="legend legend-services" ref={leftLegendRef} src="public/legend_services.png" alt="" />
         <div
           className="wrapper-outer"
           style={{ width: 1000 * scale, height: 1000 * scale }}
@@ -500,7 +500,7 @@ export default function MainScreen() {
           </div>
         </div>
         <div className="attack-defence-container">
-        <img className="legend legend-statuses" ref={rightLegendRef} src="/src/assets/legend_statuses.png" alt="" />
+        <img className="legend legend-statuses" ref={rightLegendRef} src="public/legend_statuses.png" alt="" />
         <div className={`phase-badge ${showAttackText ? 'attack' : 'defense'}`}>
           {showAttackText ? 'АТАКА' : 'ЗАЩИТА'}
         </div>

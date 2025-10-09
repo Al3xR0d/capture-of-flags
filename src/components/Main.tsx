@@ -124,8 +124,8 @@ export default function MainScreen() {
   const [showAttackText, setShowAttackText] = useState<boolean>(true);
   const [attackTextStartTime, setAttackTextStartTime] = useState<number>(Date.now());
   const [teamsThatShowedShields, setTeamsThatShowedShields] = useState<Set<number>>(new Set());
-  const ROUND_MS = 60000;
-  const ATTACK_MS = 40000;
+  const ROUND_MS = 150000;
+  const ATTACK_MS = 120000;
   const DEFENSE_MS = ROUND_MS - ATTACK_MS;
   const ARROW_TTL_MS = 4000; // время жизни стрелки
   const SHIELD_TTL_MS = 3000; // время жизни одного импульса щита

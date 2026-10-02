@@ -1,5 +1,5 @@
 import type { Attack, Snapshot, SnapshotTeam } from "../game/types";
-import type { ServerResponse, ServerShieldResponse } from "./types";
+import type { BoardAttack, BoardResponse, ServerResponse, ServerShieldResponse } from "./types";
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null;
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
@@ -69,4 +69,79 @@ export function normalizeShields(raw: unknown): number[] | null {
     if (m && on === true) ids.push(Number(m[1]));
   }
   return ids;
+}
+
+/**
+ * Снапшот бэкенда борды → снапшот. `receivedAt` — Date.now() в момент
+ * получения: по нему и serverTime поправляем начало раунда на сдвиг часов.
+ */
+export function normalizeBoard(raw: unknown, receivedAt = Date.now()): Snapshot | null {
+  if (!isObj(raw) || !Array.isArray(raw.teams) || !Array.isArray(raw.services)) return null;
+  const b = raw as BoardResponse;
+
+  const serviceById: Record<number, string> = {};
+  const services: string[] = [];
+  for (const s of b.services) {
+    if (!isObj(s) || num(s.id) == null || typeof s.name !== "string") continue;
+    serviceById[s.id] = s.name;
+    services.push(s.name);
+  }
+
+  const teams: SnapshotTeam[] = [];
+  for (const t of b.teams) {
+    if (!isObj(t) || num(t.id) == null || typeof t.name !== "string") continue;
+    const status: Record<string, number> = {};
+    const sla: Record<string, number> = {};
+    for (const s of Array.isArray(t.services) ? t.services : []) {
+      const name = isObj(s) ? serviceById[s.serviceId] : undefined;
+      if (!name) continue;
+      // status 0 — чекер по этой паре ещё не отработал.
+      if (num(s.status)) status[name] = s.status;
+      if (num(s.sla) != null) sla[name] = s.sla;
+    }
+    teams.push({
+      id: t.id,
+      name: t.name,
+      place: num(t.place) ?? teams.length + 1,
+      status,
+      score: num(t.score) ?? undefined,
+      stolen: num(t.stolen) ?? undefined,
+      lost: num(t.lost) ?? undefined,
+      sla,
+      firstBloods: (Array.isArray(t.firstBloods) ? t.firstBloods : []).flatMap((id) => serviceById[id] ?? []),
+    });
+  }
+  if (!teams.length) return null;
+
+  const offset = (num(b.serverTime) ?? receivedAt) - receivedAt;
+  const roundStart = num(b.roundStart);
+  const roundTime = num(b.roundTime);
+
+  return {
+    round: num(b.round),
+    teams,
+    services,
+    serviceById,
+    attacks: normalizeBoardAttacks(b.roundAttacks, serviceById),
+    liveAttacks: true,
+    gameRunning: typeof b.gameRunning === "boolean" ? b.gameRunning : undefined,
+    timing:
+      roundStart != null && roundTime
+        ? { roundStart: roundStart * 1000 - offset, roundTime, totalRounds: num(b.totalRounds) || undefined }
+        : undefined,
+  };
+}
+
+export function normalizeBoardAttacks(raw: unknown, serviceById: Record<number, string>): Attack[] {
+  if (!Array.isArray(raw)) return [];
+  const out: Attack[] = [];
+  for (const a of raw as BoardAttack[]) {
+    if (!isObj(a)) continue;
+    const from = num(a.from);
+    const to = num(a.to);
+    const flags = num(a.flags) ?? 1;
+    if (from == null || to == null || from === to || flags <= 0) continue;
+    out.push({ from, to, flags, service: serviceById[a.serviceId], firstBlood: a.firstBlood === true });
+  }
+  return out;
 }

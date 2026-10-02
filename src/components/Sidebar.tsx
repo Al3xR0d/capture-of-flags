@@ -42,6 +42,7 @@ function RankItem({ row: r, detached = false }: { row: RankRow; detached?: boole
       </div>
       <Avatar data={r} size={26} fontSize={10} />
       <div className="rank-row__name">{r.name}</div>
+      {r.score != null && <div className="rank-row__score">{r.score}</div>}
     </li>
   );
 }
@@ -117,6 +118,12 @@ function Legend({ view }: { view: BoardView }) {
           </div>
           {view.attackColors ? "Атака цветом сервиса, ×N — украдено флагов" : "Атака, число — украдено флагов"}
         </li>
+        {view.showFirstBloodLegend && (
+          <li>
+            <div className="notation__fb" />
+            Первая кровь по сервису
+          </li>
+        )}
         <li>
           <div className="notation__box notation__box--attacked" />
           Команда атакована

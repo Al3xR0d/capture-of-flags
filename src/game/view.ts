@@ -2,7 +2,7 @@ import type { BoardMode } from "../config";
 import { RED, SHIELD, STATUS, TIP_W, UNKNOWN_STATUS } from "./constants";
 import type { BoardEngine } from "./engine";
 import type { SnapshotTeam } from "./types";
-import { clockTime, hueOf, initials } from "./utils";
+import { clockTime, fmtScore, hueOf, initials } from "./utils";
 
 export interface Avatar {
   ini: string;
@@ -18,6 +18,8 @@ export interface ServiceCell {
   color: string;
   bg: string;
   bd: string;
+  /** SLA, % — если источник его даёт. */
+  sla?: number;
 }
 
 export interface CardView extends Avatar {
@@ -35,6 +37,9 @@ export interface CardView extends Avatar {
   shadow: string;
   mine: boolean;
   svcs: ServiceCell[];
+  score: string | null;
+  /** Коды сервисов с первой кровью: «VA SH». */
+  fbLetters: string | null;
 }
 
 export interface Delta {
@@ -53,6 +58,10 @@ export interface TipView extends Avatar {
   left: number;
   top: number;
   svcs: ServiceCell[];
+  score: string | null;
+  /** За всю игру, если источник даёт. */
+  stolenTotal: string | null;
+  lostTotal: string | null;
 }
 
 export interface RankRow extends Avatar {
@@ -61,6 +70,7 @@ export interface RankRow extends Avatar {
   name: string;
   delta: Delta;
   mine: boolean;
+  score: string | null;
 }
 
 export const avatar = (name: string): Avatar => {
@@ -107,8 +117,13 @@ export function buildView(engine: BoardEngine, { mode, myTeam }: ViewOptions) {
         color: st.c,
         bg: st === UNKNOWN_STATUS ? "transparent" : st.a(0.2),
         bd: st === UNKNOWN_STATUS ? `1px dashed ${st.a(0.6)}` : `1px solid ${st.a(0.55)}`,
+        sla: t.sla?.[name],
       };
     });
+
+  const score = (t: SnapshotTeam) => (t.score != null ? fmtScore(t.score) : null);
+  const fbLetters = (t: SnapshotTeam) =>
+    t.firstBloods?.length ? t.firstBloods.map((n) => catalog[n]?.l ?? n).join(" ") : null;
 
   // Команды, связанные с наведённой/выбранной атаками этого раунда, остаются яркими.
   const focus = hov ?? tf;
@@ -165,6 +180,8 @@ export function buildView(engine: BoardEngine, { mode, myTeam }: ViewOptions) {
       shadow: sh.join(","),
       mine,
       svcs: cells(t),
+      score: score(t),
+      fbLetters: fbLetters(t),
     }];
   });
 
@@ -185,11 +202,15 @@ export function buildView(engine: BoardEngine, { mode, myTeam }: ViewOptions) {
       delta: delta(ht),
       stolen: out.reduce((s, a) => s + a.flags, 0),
       lost: inc.reduce((s, a) => s + a.flags, 0),
-      victims: out.map((a) => name(a.to)),
-      attackers: inc.map((a) => name(a.from)),
+      // Атаки по разным сервисам на одну команду — одно имя.
+      victims: [...new Set(out.map((a) => name(a.to)))],
+      attackers: [...new Set(inc.map((a) => name(a.from)))],
       left: Math.round(Math.max(8, Math.min(engine.W - TIP_W - 8, tx - TIP_W / 2))),
-      top: Math.round(Math.max(8, Math.min(engine.H - 340, ty - 160))),
+      top: Math.round(Math.max(8, Math.min(engine.H - 380, ty - 170))),
       svcs: cells(ht),
+      score: score(ht),
+      stolenTotal: ht.stolen != null ? fmtScore(ht.stolen) : null,
+      lostTotal: ht.lost != null ? fmtScore(ht.lost) : null,
     };
   }
 
@@ -200,6 +221,7 @@ export function buildView(engine: BoardEngine, { mode, myTeam }: ViewOptions) {
     name: t.name,
     delta: delta(t),
     mine: t.id === myTeam,
+    score: score(t),
     ...avatar(t.name),
   });
   const topN = mode === "screen" ? 10 : 5;
@@ -222,6 +244,10 @@ export function buildView(engine: BoardEngine, { mode, myTeam }: ViewOptions) {
     /** API присылает serv_name у атак — дуги цветные, легенда «цвет атаки». */
     attackColors: attacks.some((a) => a.service),
     showShieldLegend: engine.shieldsSeen,
+    showFirstBloodLegend: teams.some((t) => t.firstBloods?.length),
+    timing: snap?.timing ?? null,
+    /** Источник сообщил, что игра на паузе. */
+    paused: snap?.gameRunning === false,
     teamFilter: tf,
     teamOptions: [...teams].sort((a, b) => a.id - b.id).map((t) => ({ id: t.id, label: t.name })),
   };

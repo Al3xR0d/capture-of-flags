@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { createSources } from "./api/sources";
+import { createFeed } from "./api/sources";
 import { Header } from "./components/Header";
 import { MapView } from "./components/MapView";
 import { Sidebar } from "./components/Sidebar";
@@ -13,8 +13,8 @@ interface Props {
 }
 
 export default function App({ config, query }: Props) {
-  const sources = useMemo(() => createSources(config, query), [config, query]);
-  const engine = useBoard({ sources, pollMs: config.pollMs, maxArcs: config.maxArcs });
+  const feed = useMemo(() => createFeed(config, query), [config, query]);
+  const engine = useBoard({ feed, pollMs: config.pollMs, maxArcs: config.maxArcs });
   const view = buildView(engine, { mode: query.mode, myTeam: query.myTeam });
 
   return (

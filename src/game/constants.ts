@@ -29,6 +29,7 @@ export const STATUS_ORDER = [101, 104, 103, 102, 110];
 export const UNKNOWN_STATUS: StatusInfo = { label: "НЕТ ДАННЫХ", short: "—", ...mk(0.5, 0.02, 255) };
 
 export const RED = STATUS[104];
+export const GOLD = mk(0.85, 0.15, 82);
 export const ACCENT = mk(0.8, 0.12, 205);
 export const SHIELD = mk(0.82, 0.09, 225);
 
@@ -83,6 +84,10 @@ export function serviceCatalog(services: string[]): Record<string, ServiceInfo> 
 export const ARC_LIFE = 2600;
 /** Время полёта «головы» дуги, мс. */
 export const ARC_TRAVEL = 900;
+/** Полёт дуги первой крови — медленнее и заметнее, мс. */
+export const FB_TRAVEL = 1300;
+/** На сколько разносятся во времени дуги одной пачки из потока, мс. */
+export const LIVE_STAGGER = 1800;
 /** Длительность пульса щита, мс. */
 export const SHIELD_LIFE = 3000;
 /** Доля окна опроса, по которой раскидываются атаки (хвост — чтобы успели долететь). */

@@ -1,6 +1,7 @@
 import type { ConnectionState } from "../game/types";
 import type { BoardView } from "../game/view";
-import { plural } from "../game/utils";
+import { fmtDuration, plural } from "../game/utils";
+import { useNow } from "../hooks/useNow";
 
 interface Props {
   title: string;
@@ -9,7 +10,20 @@ interface Props {
 }
 
 export function Header({ title, view, mock }: Props) {
-  const { teamCount: t, serviceCount: s } = view;
+  const { teamCount: t, serviceCount: s, timing, paused } = view;
+  // На паузе forcad не двигает начало раунда — таймер замирает на последнем значении.
+  const now = useNow(1000, !!timing && !paused);
+
+  let roundLeft: number | null = null;
+  let gameLeft: number | null = null;
+  if (timing) {
+    roundLeft = Math.max(0, timing.roundTime - (now - timing.roundStart) / 1000);
+    if (timing.totalRounds && view.round != null) {
+      gameLeft = Math.max(0, (timing.totalRounds - view.round) * timing.roundTime + roundLeft);
+    }
+  }
+  const roundColor = paused ? "oklch(0.6 0.02 255)" : roundLeft != null && roundLeft <= 10 ? "var(--down)" : undefined;
+
   return (
     <header className="header">
       <div className="header__brand">
@@ -30,10 +44,30 @@ export function Header({ title, view, mock }: Props) {
         {view.round != null && (
           <div className="stat">
             <div className="stat__label">Раунд</div>
-            <div className="stat__value">{view.round}</div>
+            <div className="stat__value">
+              {view.round}
+              {timing?.totalRounds ? <span className="stat__total">/{timing.totalRounds}</span> : null}
+            </div>
           </div>
         )}
-        {view.lastUpdate && (
+        {roundLeft != null && (
+          <>
+            <div className="header__divider" />
+            <div className="stat">
+              <div className="stat__label">До конца раунда</div>
+              <div className="stat__value" style={{ color: roundColor }}>
+                {fmtDuration(roundLeft)}
+              </div>
+            </div>
+          </>
+        )}
+        {gameLeft != null && (
+          <div className="stat">
+            <div className="stat__label">До конца игры</div>
+            <div className="stat__value">{fmtDuration(gameLeft)}</div>
+          </div>
+        )}
+        {!timing && view.lastUpdate && (
           <>
             <div className="header__divider" />
             <div className="stat">
@@ -45,8 +79,15 @@ export function Header({ title, view, mock }: Props) {
       </div>
 
       <div className="header__status">
-        <ConnectionBadge state={view.connection} mock={mock} />
+        <ConnectionBadge state={view.connection} mock={mock} paused={paused} />
       </div>
+
+      {timing && roundLeft != null && (
+        <div
+          className="header__progress"
+          style={{ width: `${(((timing.roundTime - roundLeft) / timing.roundTime) * 100).toFixed(1)}%` }}
+        />
+      )}
     </header>
   );
 }
@@ -58,8 +99,13 @@ const BADGES: Record<ConnectionState, { cls: string; text: string }> = {
   offline: { cls: "badge--stale", text: "НЕТ СВЯЗИ" },
 };
 
-function ConnectionBadge({ state, mock }: { state: ConnectionState; mock: boolean }) {
-  const b = mock && state === "live" ? { cls: "badge--mock", text: "MOCK" } : BADGES[state];
+function ConnectionBadge({ state, mock, paused }: { state: ConnectionState; mock: boolean; paused: boolean }) {
+  const b =
+    state === "live" && paused
+      ? { cls: "badge--paused", text: "ПАУЗА" }
+      : mock && state === "live"
+        ? { cls: "badge--mock", text: "MOCK" }
+        : BADGES[state];
   return (
     <div className={`badge ${b.cls}`} role="status">
       <div className="badge__dot" />

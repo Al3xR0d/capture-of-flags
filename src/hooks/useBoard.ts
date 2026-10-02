@@ -1,50 +1,30 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import type { Sources } from "../api/sources";
+import type { Feed } from "../api/sources";
 import { BoardEngine } from "../game/engine";
 
 interface Options {
-  sources: Sources;
+  feed: Feed;
   pollMs: number;
   maxArcs: number;
 }
 
-/**
- * Движок борды + опрос источников. Табло и щиты запрашиваются параллельно;
- * щиты применяются после табло, чтобы попасть в тот же раунд.
- */
-export function useBoard({ sources, pollMs, maxArcs }: Options): BoardEngine {
+/** Движок борды, подключённый к фиду данных. */
+export function useBoard({ feed, pollMs, maxArcs }: Options): BoardEngine {
   const [engine] = useState(() => new BoardEngine({ pollMs, maxArcs }));
   useSyncExternalStore(engine.subscribe, engine.getVersion);
 
   useEffect(() => {
-    let cancelled = false;
-    let inFlight = false;
-
-    const poll = async () => {
-      if (inFlight) return;
-      inFlight = true;
-      try {
-        const [board, shields] = await Promise.all([
-          sources.scoreboard?.fetch() ?? Promise.resolve(null),
-          sources.shields?.fetch() ?? Promise.resolve(null),
-        ]);
-        if (cancelled) return;
-        if (board) engine.applySnapshot(board);
-        else engine.markScoreboardFailed();
-        if (board && shields) engine.applyShields(shields);
-      } finally {
-        inFlight = false;
-      }
-    };
-
-    void poll();
-    const id = window.setInterval(poll, pollMs);
+    const stop = feed.start({
+      snapshot: (s) => engine.applySnapshot(s),
+      attacks: (a) => engine.applyLiveAttacks(a),
+      failed: () => engine.markScoreboardFailed(),
+      shields: (ids) => engine.applyShields(ids),
+    });
     return () => {
-      cancelled = true;
-      clearInterval(id);
+      stop();
       engine.dispose();
     };
-  }, [engine, sources, pollMs]);
+  }, [engine, feed]);
 
   return engine;
 }

@@ -1,5 +1,5 @@
 import {
-  ACCENT, ARC_LIFE, ARC_TRAVEL, BOWS, CARD_H, CARD_W, RED, SHIELD, SHIELD_LIFE, SPREAD,
+  ACCENT, ARC_LIFE, ARC_TRAVEL, BOWS, CARD_H, CARD_W, FB_TRAVEL, GOLD, LIVE_STAGGER, RED, SHIELD, SHIELD_LIFE, SPREAD,
   serviceCatalog, type ServiceInfo, type Tone,
 } from "./constants";
 import { computeLayout } from "./layout";
@@ -18,9 +18,10 @@ export interface EngineOptions {
  * `subscribe` / `getVersion` (useSyncExternalStore), канвас рисуется вызовом
  * `draw` из rAF.
  *
- * Каждый ответ API — снапшот раунда. Атаки снапшота раскидываются дугами по
- * окну опроса, команды с сработавшей защитой (Wazuh) получают по одному
- * пульсу щита за раунд.
+ * Каждый ответ API — снапшот раунда. Для старого API атаки снапшота
+ * раскидываются дугами по окну опроса; у бэкенда борды атаки приходят
+ * потоком (applyLiveAttacks). Команды с сработавшей защитой (Wazuh) получают
+ * по одному пульсу щита за раунд.
  */
 export class BoardEngine {
   readonly opts: EngineOptions;
@@ -113,10 +114,31 @@ export class BoardEngine {
     this.connection = "live";
     this.lastUpdate = Date.now();
 
-    if (snap.round == null || snap.round !== this.spawnedRound) {
+    if (!snap.liveAttacks && (snap.round == null || snap.round !== this.spawnedRound)) {
       this.spawnedRound = snap.round;
       this.scheduleAttacks(snap.attacks);
     }
+    this.bump();
+  }
+
+  /**
+   * Пачка атак из потока: дуги разносятся по LIVE_STAGGER, сами атаки
+   * докладываются в атаки раунда (hover, подсказка) до следующего снапшота.
+   */
+  applyLiveAttacks(attacks: Attack[]) {
+    const snap = this.snapshot;
+    if (!snap) return;
+    const merged = [...snap.attacks];
+    for (const a of attacks) {
+      const cur = merged.find((x) => x.from === a.from && x.to === a.to && x.service === a.service);
+      if (cur) {
+        const i = merged.indexOf(cur);
+        merged[i] = { ...cur, flags: cur.flags + a.flags, firstBlood: cur.firstBlood || a.firstBlood };
+      } else merged.push(a);
+    }
+    this.snapshot = { ...snap, attacks: merged };
+    const step = attacks.length > 1 ? LIVE_STAGGER / (attacks.length - 1) : 0;
+    attacks.forEach((a, i) => this.later(() => this.addArc(a), i * step, this.timeouts));
     this.bump();
   }
 
@@ -164,7 +186,7 @@ export class BoardEngine {
       pull: 0.22 + Math.random() * 0.22,
       bow: BOWS[this.slot++ % BOWS.length],
     });
-    const tone = this.toneOf(a);
+    const tone = a.firstBlood ? GOLD : this.toneOf(a);
     this.glow[a.from] = { until: now + 900, color: tone.c, glow: tone.a(0.5) };
     this.bump(950);
   }
@@ -337,12 +359,14 @@ export class BoardEngine {
       const g = this.geom(a.from, a.to, a.pull, a.bow);
       if (!g) continue;
       const age = Math.max(0, now - a.born);
-      const pr = Math.min(1, age / ARC_TRAVEL);
+      const fb = !!a.firstBlood;
+      const travel = fb ? FB_TRAVEL : ARC_TRAVEL;
+      const pr = Math.min(1, age / travel);
       const head = g.t0 + (g.t1 - g.t0) * (1 - Math.pow(1 - pr, 3));
       const fade = age < ARC_LIFE - 900 ? 1 : Math.max(0, (ARC_LIFE - age) / 900);
       const dim = hov != null && a.from !== hov && a.to !== hov ? 0.1 : 1;
-      const w = 1.5 + Math.min(a.flags - 1, 4) * 0.6;
-      const col = this.toneOf(a);
+      const w = fb ? 3.2 : 1.5 + Math.min(a.flags - 1, 4) * 0.6;
+      const col = fb ? GOLD : this.toneOf(a);
       const svc = a.service ? this.catalog[a.service] : undefined;
 
       ctx.save();
@@ -369,7 +393,7 @@ export class BoardEngine {
         ctx.shadowBlur = 14;
         ctx.fillStyle = "oklch(0.98 0.01 250)";
         ctx.beginPath();
-        ctx.arc(q.x, q.y, 3, 0, Math.PI * 2);
+        ctx.arc(q.x, q.y, fb ? 4.5 : 3, 0, Math.PI * 2);
         ctx.fill();
         ctx.shadowBlur = 0;
       } else {
@@ -382,7 +406,7 @@ export class BoardEngine {
         const q = bz(g, g.t1);
         const q2 = bz(g, g.t1 - 0.02);
         const an = Math.atan2(q.y - q2.y, q.x - q2.x);
-        const sz = 7 + Math.min(a.flags - 1, 4);
+        const sz = fb ? 11 : 7 + Math.min(a.flags - 1, 4);
         ctx.globalAlpha = fade * dim;
         ctx.fillStyle = col.c;
         ctx.beginPath();
@@ -391,10 +415,10 @@ export class BoardEngine {
         ctx.lineTo(q.x - sz * Math.cos(an + 0.42), q.y - sz * Math.sin(an + 0.42));
         ctx.closePath();
         ctx.fill();
-        const ia = (age - ARC_TRAVEL) / 600;
+        const ia = (age - travel) / 600;
         if (ia < 1) {
           ctx.globalAlpha = (1 - ia) * dim;
-          ctx.strokeStyle = RED.c;
+          ctx.strokeStyle = fb ? GOLD.c : RED.c;
           ctx.lineWidth = 1.5;
           ctx.beginPath();
           ctx.arc(q.x, q.y, 4 + ia * 22, 0, Math.PI * 2);
@@ -408,7 +432,7 @@ export class BoardEngine {
       ctx.globalAlpha = fade * dim;
       ctx.fillStyle = "oklch(0.16 0.02 255)";
       ctx.strokeStyle = col.c;
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = fb ? 2 : 1.5;
       ctx.beginPath();
       ctx.arc(s0.x, s0.y, r, 0, Math.PI * 2);
       ctx.fill();
@@ -433,6 +457,20 @@ export class BoardEngine {
         ctx.fillStyle = "oklch(0.16 0.02 255)";
         ctx.textAlign = "left";
         ctx.fillText(txt, px + 4, s0.y + 0.5);
+      }
+
+      if (fb) {
+        const m = bz(g, (g.t0 + g.t1) / 2);
+        const txt = `FIRST BLOOD${a.service ? ` · ${a.service.toUpperCase()}` : ""}`;
+        ctx.font = '700 13px "IBM Plex Mono", monospace';
+        const tw = ctx.measureText(txt).width + 16;
+        ctx.fillStyle = GOLD.c;
+        ctx.beginPath();
+        ctx.roundRect(m.x - tw / 2, m.y - 12, tw, 24, 4);
+        ctx.fill();
+        ctx.fillStyle = "oklch(0.2 0.03 82)";
+        ctx.textAlign = "center";
+        ctx.fillText(txt, m.x, m.y + 1);
       }
       ctx.restore();
     }

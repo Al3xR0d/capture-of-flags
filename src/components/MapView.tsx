@@ -69,6 +69,13 @@ export function MapView({ engine, view }: Props) {
 
       {view.tip && <TeamTooltip tip={view.tip} round={view.round} />}
 
+      {view.paused && view.cards.length > 0 && (
+        <div className="pause" role="status">
+          <div className="pause__title">ПАУЗА</div>
+          <div className="pause__text">Игра приостановлена организаторами</div>
+        </div>
+      )}
+
       {view.cards.length === 0 && (
         <div className="map__empty" role="status">
           {view.connection === "offline" ? (

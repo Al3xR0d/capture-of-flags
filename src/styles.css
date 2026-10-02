@@ -20,6 +20,7 @@
   --down: oklch(0.66 0.21 25);
   --mumble: oklch(0.86 0.16 95);
   --shield: oklch(0.82 0.09 225);
+  --gold: oklch(0.85 0.15 82);
 
   color-scheme: dark;
 }
@@ -174,9 +175,22 @@ select option {
   font-variant-numeric: tabular-nums;
 }
 
+.stat__total {
+  color: oklch(0.55 0.02 255);
+}
+
 .stat__value--sm {
   font-size: clamp(16px, 1.1vw, 20px);
   color: oklch(0.8 0.02 255);
+}
+
+.header__progress {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  background: oklch(0.8 0.12 205 / 0.8);
+  transition: width 1s linear;
 }
 
 .header__status {
@@ -198,6 +212,10 @@ select option {
   font-size: 14px;
   letter-spacing: 0.14em;
   color: var(--c);
+}
+
+.badge--paused {
+  --c: var(--mumble);
 }
 
 .badge--waiting {
@@ -270,6 +288,31 @@ select option {
     linear-gradient(90deg, oklch(0.4 0.03 250 / 0.09) 1px, transparent 1px);
   background-size: 48px 48px;
   background-position: center;
+}
+
+.pause {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: oklch(0.12 0.015 255 / 0.62);
+}
+
+.pause__title {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: clamp(36px, 5vw, 64px);
+  letter-spacing: 0.2em;
+  color: var(--mumble);
+}
+
+.pause__text {
+  font-size: 16px;
+  color: oklch(0.8 0.02 255);
 }
 
 .map__empty {
@@ -364,6 +407,12 @@ select option {
   color: oklch(0.8 0.02 255);
 }
 
+.team__score {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 .team__delta {
   font-size: 11px;
   font-weight: 600;
@@ -402,6 +451,14 @@ select option {
 }
 
 /* ── tooltip ────────────────────────────────────────────────────────── */
+
+.team__tag--fb {
+  left: auto;
+  right: 8px;
+  background: var(--gold);
+  color: oklch(0.2 0.03 82);
+  letter-spacing: 0.06em;
+}
 
 .tip {
   position: absolute;
@@ -514,6 +571,30 @@ select option {
   font-weight: 700;
 }
 
+.svc-row--sla {
+  grid-template-columns: 24px 48px 1fr 64px;
+}
+
+.svc-row__pct {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+
+.svc-row__track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line-2);
+  overflow: hidden;
+}
+
+.svc-row__track > div {
+  height: 100%;
+}
+
+.svc-row--sla .svc-row__status {
+  text-align: right;
+}
+
 .svc-row__status {
   font-family: var(--font-mono);
   font-size: 10.5px;
@@ -569,7 +650,7 @@ select option {
 
 .rank-row {
   display: grid;
-  grid-template-columns: 26px 34px 26px minmax(0, 1fr);
+  grid-template-columns: 26px 34px 26px minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
@@ -590,6 +671,13 @@ select option {
   font-family: var(--font-mono);
   font-size: 16px;
   font-weight: 700;
+}
+
+.rank-row__score {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .rank-row--detached .rank-row__place {
@@ -734,6 +822,14 @@ select option {
   font-weight: 700;
 }
 
+.notation__fb {
+  width: 26px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--gold);
+  box-shadow: 0 0 6px var(--gold);
+}
+
 .notation__box {
   width: 26px;
   height: 14px;
@@ -763,6 +859,7 @@ select option {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .header__progress,
   .team,
   .team__body {
     transition: none;

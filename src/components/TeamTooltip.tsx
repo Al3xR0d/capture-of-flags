@@ -11,6 +11,7 @@ export function TeamTooltip({ tip, round }: { tip: TipView; round: number | null
           <div className="tip__name">{tip.name}</div>
           <div className="tip__meta">
             #{tip.place} <span style={{ color: tip.delta.color }}>{tip.delta.text}</span>
+            {tip.score != null && <> · {tip.score} pts</>}
           </div>
         </div>
       </div>
@@ -19,12 +20,12 @@ export function TeamTooltip({ tip, round }: { tip: TipView; round: number | null
         <div className="tip__stat">
           <div className="tip__stat-label">Украдено флагов</div>
           <div className="tip__stat-value" style={{ color: "var(--up)" }}>+{tip.stolen}</div>
-          <div className="tip__stat-total">{roundLabel}</div>
+          <div className="tip__stat-total">{tip.stolenTotal != null ? `за игру ${tip.stolenTotal}` : roundLabel}</div>
         </div>
         <div className="tip__stat">
           <div className="tip__stat-label">Потеряно флагов</div>
           <div className="tip__stat-value" style={{ color: "var(--down)" }}>−{tip.lost}</div>
-          <div className="tip__stat-total">{roundLabel}</div>
+          <div className="tip__stat-total">{tip.lostTotal != null ? `за игру ${tip.lostTotal}` : roundLabel}</div>
         </div>
       </div>
 
@@ -33,25 +34,45 @@ export function TeamTooltip({ tip, round }: { tip: TipView; round: number | null
 
       {tip.svcs.length > 0 && (
         <>
-          <div className="tip__section">СТАТУС СЕРВИСОВ</div>
+          <div className="tip__section">
+            {tip.svcs.some((s) => s.sla != null) ? "SLA ПО СЕРВИСАМ" : "СТАТУС СЕРВИСОВ"}
+            {round != null && ` · РАУНД ${round}`}
+          </div>
           <div className="tip__svcs">
-            {tip.svcs.map((s) => (
-              <div key={s.name} className="svc-row">
-                <div className="svc-row__letter" style={{ background: s.bg, border: s.bd, color: s.color }}>
-                  {s.l}
+            {tip.svcs.map((s) =>
+              s.sla != null ? (
+                <div key={s.name} className="svc-row svc-row--sla" title={s.name}>
+                  <div className="svc-row__letter" style={{ background: s.bg, border: s.bd, color: s.color }}>
+                    {s.l}
+                  </div>
+                  <div className="svc-row__pct">{s.sla.toFixed(1)}%</div>
+                  <div className="svc-row__track">
+                    <div style={{ width: `${s.sla}%`, background: slaColor(s.sla) }} />
+                  </div>
+                  <div className="svc-row__status" style={{ color: s.color }}>
+                    {s.short}
+                  </div>
                 </div>
-                <div className="svc-row__name">{s.name}</div>
-                <div className="svc-row__status" style={{ color: s.color }}>
-                  {s.short}
+              ) : (
+                <div key={s.name} className="svc-row">
+                  <div className="svc-row__letter" style={{ background: s.bg, border: s.bd, color: s.color }}>
+                    {s.l}
+                  </div>
+                  <div className="svc-row__name">{s.name}</div>
+                  <div className="svc-row__status" style={{ color: s.color }}>
+                    {s.short}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ),
+            )}
           </div>
         </>
       )}
     </div>
   );
 }
+
+const slaColor = (v: number) => (v >= 90 ? "var(--up)" : v >= 75 ? "var(--mumble)" : "var(--down)");
 
 function TeamList({ label, names }: { label: string; names: string[] }) {
   return (

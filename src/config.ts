@@ -16,6 +16,9 @@ export interface BoardConfig {
   requestTimeoutMs: number;
   maxArcs: number;
   sources: {
+    /** Бэкенд борды (ctf-board-backend). Задан — используется вместо scoreboard. */
+    board: SourceConfig;
+    /** Старый API (/ctfdata/). */
     scoreboard: SourceConfig;
     shields: SourceConfig;
   };
@@ -39,6 +42,7 @@ export const DEFAULT_CONFIG: BoardConfig = {
   requestTimeoutMs: 10_000,
   maxArcs: 40,
   sources: {
+    board: { url: "http://localhost:8090" },
     scoreboard: { url: "http://10.62.0.120:8000/ctfdata/" },
     shields: { url: "http://gitlabapps.ctflab.local:8080/ctf-backend/api/wazuh/activity" },
   },

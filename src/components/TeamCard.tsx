@@ -30,10 +30,22 @@ export function TeamCard({ card: t, onEnter, onLeave }: Props) {
               {t.name}
             </div>
             <div className="team__meta">
-              <span className="team__place">#{t.place}</span>
-              <span className="team__delta" style={{ color: t.delta.color }}>
-                {t.delta.text}
+              <span className="team__place">
+                #{t.place}
+                {t.score != null && (
+                  <span className="team__delta" style={{ color: t.delta.color }}>
+                    {" "}
+                    {t.delta.text}
+                  </span>
+                )}
               </span>
+              {t.score != null ? (
+                <span className="team__score">{t.score}</span>
+              ) : (
+                <span className="team__delta" style={{ color: t.delta.color }}>
+                  {t.delta.text}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -54,6 +66,7 @@ export function TeamCard({ card: t, onEnter, onLeave }: Props) {
         )}
 
         {t.mine && <div className="team__tag">ВЫ</div>}
+        {t.fbLetters && <div className="team__tag team__tag--fb">1ST BLOOD · {t.fbLetters}</div>}
       </div>
     </div>
   );

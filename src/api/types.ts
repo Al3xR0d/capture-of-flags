@@ -35,3 +35,55 @@ export type ServerResponse = {
 
 /** Wazuh: `{ "team-1": true, "team-2": false, ... }`. */
 export type ServerShieldResponse = Record<string, boolean>;
+
+/**
+ * Бэкенд борды (ctf-board-backend): GET /api/board и SSE /api/stream
+ * (`event: board` — этот же снапшот, `event: attacks` — BoardAttackBatch).
+ */
+export type BoardResponse = {
+  round: number;
+  /** unix, с */
+  roundStart: number;
+  /** с */
+  roundTime: number;
+  totalRounds?: number;
+  gameRunning: boolean;
+  /** unix, мс — для поправки на сдвиг часов */
+  serverTime: number;
+  services: { id: number; name: string }[];
+  teams: {
+    id: number;
+    name: string;
+    place: number;
+    score: number;
+    stolen: number;
+    lost: number;
+    services: {
+      serviceId: number;
+      status: number;
+      sla: number;
+      score: number;
+      stolen: number;
+      lost: number;
+      message?: string;
+    }[];
+    firstBloods: number[];
+  }[];
+  firstBloods: { serviceId: number; attackerId: number; victimId: number; time: string }[];
+  roundAttacks: BoardAttack[];
+};
+
+export type BoardAttack = {
+  from: number;
+  to: number;
+  serviceId: number;
+  flags: number;
+  points: number;
+  firstBlood?: boolean;
+  round: number;
+};
+
+export type BoardAttackBatch = {
+  attacks: BoardAttack[];
+  dropped?: number;
+};

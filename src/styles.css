@@ -252,6 +252,16 @@ select option {
   background: radial-gradient(ellipse at center, oklch(0.185 0.028 250) 0%, oklch(0.145 0.015 255) 72%);
 }
 
+.map__radar {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.map__radar canvas {
+  display: block;
+}
+
 .map__grid {
   position: absolute;
   inset: 0;
@@ -260,37 +270,6 @@ select option {
     linear-gradient(90deg, oklch(0.4 0.03 250 / 0.09) 1px, transparent 1px);
   background-size: 48px 48px;
   background-position: center;
-}
-
-.map__ring,
-.map__center {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.map__ring {
-  border-radius: 50%;
-}
-
-.map__ring--inner {
-  width: 30%;
-  height: 30%;
-  border: 1px dashed oklch(0.4 0.03 250 / 0.35);
-}
-
-.map__ring--outer {
-  width: 56%;
-  height: 56%;
-  border: 1px solid oklch(0.4 0.03 250 / 0.22);
-}
-
-.map__center {
-  width: 6px;
-  height: 6px;
-  transform: translate(-50%, -50%) rotate(45deg);
-  background: oklch(0.5 0.04 250 / 0.6);
 }
 
 .map__empty {
@@ -518,14 +497,14 @@ select option {
 
 .svc-row {
   display: grid;
-  grid-template-columns: 18px 1fr auto;
+  grid-template-columns: 24px 1fr auto;
   align-items: center;
   gap: 8px;
   font-size: 12px;
 }
 
 .svc-row__letter {
-  width: 18px;
+  width: 24px;
   height: 16px;
   border-radius: 3px;
   display: grid;
@@ -684,8 +663,8 @@ select option {
 }
 
 .svc-legend__letter {
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   flex: none;
   display: grid;

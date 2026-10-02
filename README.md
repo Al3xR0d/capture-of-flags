@@ -68,6 +68,10 @@ npm run lint
 - Команды с `true` у Wazuh получают один пульс щита за раунд в случайный момент окна.
 - ↑/↓ — изменение `team_pos` относительно прошлого раунда.
 - Карточки расставлены по `team_id` и не прыгают при смене мест.
+- Сервисы обозначаются двухсимвольными кодами: VA VibeAura, BF BioForge, SH SmartHome,
+  SC SleepCaps, SK SKUDS. Для новых сервисов код строится автоматически
+  (заглавные буквы CamelCase или первая + следующая буква), коды и цвета — `src/game/constants.ts`.
+- Фон карты — [Radar](https://reactbits.dev/backgrounds/radar) из React Bits (`src/components/Radar.tsx`, WebGL через `ogl`).
 
 ## Структура
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { BoardEngine } from "../game/engine";
 import type { BoardView } from "../game/view";
+import Radar from "./Radar";
 import { TeamCard } from "./TeamCard";
 import { TeamTooltip } from "./TeamTooltip";
 
@@ -42,10 +43,19 @@ export function MapView({ engine, view }: Props) {
 
   return (
     <div ref={mapRef} className="map">
+      <div className="map__radar" aria-hidden>
+        <Radar
+          color="#00ff9d"
+          speed={0.6}
+          spokeCount={9}
+          falloff={0.1}
+          brightness={0.3}
+          sweepSpeed={5}
+          mouseInfluence={1}
+          enableMouseInteraction={false}
+        />
+      </div>
       <div className="map__grid" aria-hidden />
-      <div className="map__ring map__ring--inner" aria-hidden />
-      <div className="map__ring map__ring--outer" aria-hidden />
-      <div className="map__center" aria-hidden />
       <canvas ref={canvasRef} className="map__arcs" aria-hidden />
 
       {view.cards.map((c) => (

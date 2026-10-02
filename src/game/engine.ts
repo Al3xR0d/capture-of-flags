@@ -402,7 +402,7 @@ export class BoardEngine {
         }
       }
 
-      // Бейдж у атакующего: буква сервиса (если известен), иначе число флагов.
+      // Бейдж у атакующего: код сервиса (если известен), иначе число флагов.
       const s0 = bz(g, g.t0);
       const r = 9 * Math.max(0.85, sc);
       ctx.globalAlpha = fade * dim;
@@ -414,10 +414,11 @@ export class BoardEngine {
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = col.c;
-      ctx.font = `700 ${Math.round(r * 1.1)}px "IBM Plex Mono", monospace`;
+      const label = svc ? svc.l : String(a.flags);
+      ctx.font = `700 ${Math.round(r * (label.length > 1 ? 0.85 : 1.1))}px "IBM Plex Mono", monospace`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(svc ? svc.l : String(a.flags), s0.x, s0.y + 0.5);
+      ctx.fillText(label, s0.x, s0.y + 0.5);
 
       // Сервис известен и флагов больше одного — «×N» рядом с бейджем.
       if (svc && a.flags > 1) {

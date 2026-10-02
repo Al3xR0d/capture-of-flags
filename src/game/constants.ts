@@ -34,30 +34,44 @@ export const SHIELD = mk(0.82, 0.09, 225);
 
 export interface ServiceInfo extends Tone {
   name: string;
+  /** Двухсимвольный код сервиса. */
   l: string;
 }
 
-/** Известные сервисы: буква + цвет атаки. */
+/** Известные сервисы: код + цвет атаки. */
 const KNOWN_SERVICES: Record<string, { l: string; tone: Tone }> = {
-  VibeAura: { l: "V", tone: mk(0.8, 0.12, 205) },
-  BioForge: { l: "B", tone: mk(0.72, 0.15, 258) },
-  SmartHome: { l: "H", tone: mk(0.72, 0.17, 300) },
-  SleepCaps: { l: "S", tone: mk(0.75, 0.17, 342) },
-  SKUDS: { l: "K", tone: mk(0.8, 0.12, 178) },
+  VibeAura: { l: "VA", tone: mk(0.8, 0.12, 205) },
+  BioForge: { l: "BF", tone: mk(0.72, 0.15, 258) },
+  SmartHome: { l: "SH", tone: mk(0.72, 0.17, 300) },
+  SleepCaps: { l: "SC", tone: mk(0.75, 0.17, 342) },
+  SKUDS: { l: "SK", tone: mk(0.8, 0.12, 178) },
 };
+
+/**
+ * Код неизвестного сервиса: заглавные буквы CamelCase (SmartHome → SH),
+ * иначе первая буква + следующие по очереди (Notes → NO, NT, NE…).
+ */
+function codeCandidates(name: string): string[] {
+  const clean = name.replace(/[^A-Za-zА-Яа-я0-9]/g, "");
+  const up = clean.toUpperCase();
+  const caps = clean.replace(/[^A-ZА-Я0-9]/g, "");
+  const res = caps.length >= 2 ? [caps.slice(0, 2)] : [];
+  for (let i = 1; i < up.length; i++) res.push(up[0] + up[i]);
+  return res;
+}
 
 /** Цвета для сервисов, которых нет в KNOWN_SERVICES. */
 const SPARE_TONES = [mk(0.92, 0.03, 250), mk(0.78, 0.14, 130), mk(0.76, 0.13, 25), mk(0.8, 0.1, 230)];
 
-/** Буква и цвет каждого сервиса; неизвестным — первая свободная буква имени и свободный цвет. */
+/** Код и цвет каждого сервиса; неизвестным — первый свободный код и свободный цвет. */
 export function serviceCatalog(services: string[]): Record<string, ServiceInfo> {
   const usedL = new Set<string>();
   const res: Record<string, ServiceInfo> = {};
   let spare = 0;
   for (const name of services) {
     const known = KNOWN_SERVICES[name];
-    const candidates = [known?.l, ...name.toUpperCase().replace(/[^A-ZА-Я0-9]/g, "")].filter(Boolean) as string[];
-    const l = candidates.find((c) => !usedL.has(c)) ?? "?";
+    const candidates = [known?.l, ...codeCandidates(name)].filter(Boolean) as string[];
+    const l = candidates.find((c) => !usedL.has(c)) ?? `S${usedL.size + 1}`;
     usedL.add(l);
     const tone = known?.tone ?? SPARE_TONES[spare++ % SPARE_TONES.length];
     res[name] = { name, l, ...tone };

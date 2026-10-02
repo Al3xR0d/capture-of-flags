@@ -82,11 +82,13 @@ function Legend({ view }: { view: BoardView }) {
     <section className="panel panel--scroll">
       {view.services.length > 0 && (
         <>
-          <h2 className="panel__title">СЕРВИСЫ</h2>
+          <h2 className="panel__title">{view.attackColors ? "СЕРВИСЫ · ЦВЕТ АТАКИ" : "СЕРВИСЫ"}</h2>
           <div className="legend-grid">
             {view.services.map((s) => (
               <div key={s.name} className="svc-legend">
-                <div className="svc-legend__letter">{s.l}</div>
+                <div className="svc-legend__letter" style={{ borderColor: s.c, color: s.c }}>
+                  {s.l}
+                </div>
                 <div className="svc-legend__name">{s.name}</div>
               </div>
             ))}
@@ -111,9 +113,9 @@ function Legend({ view }: { view: BoardView }) {
       <ul className="notation">
         <li>
           <div className="notation__arc">
-            <span>2</span>
+            <span>{view.attackColors ? "×" : "2"}</span>
           </div>
-          Атака, число — украдено флагов
+          {view.attackColors ? "Атака цветом сервиса, ×N — украдено флагов" : "Атака, число — украдено флагов"}
         </li>
         <li>
           <div className="notation__box notation__box--attacked" />

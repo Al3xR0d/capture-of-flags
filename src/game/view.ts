@@ -1,5 +1,5 @@
 import type { BoardMode } from "../config";
-import { RED, SHIELD, STATUS, TIP_W, UNKNOWN_STATUS, serviceLetters } from "./constants";
+import { RED, SHIELD, STATUS, TIP_W, UNKNOWN_STATUS } from "./constants";
 import type { BoardEngine } from "./engine";
 import type { SnapshotTeam } from "./types";
 import { clockTime, hueOf, initials } from "./utils";
@@ -83,7 +83,7 @@ export function buildView(engine: BoardEngine, { mode, myTeam }: ViewOptions) {
   const teams = snap?.teams ?? [];
   const byId = new Map(teams.map((t) => [t.id, t]));
   const services = snap?.services ?? [];
-  const letters = serviceLetters(services);
+  const catalog = engine.catalog;
   const attacks = snap?.attacks ?? [];
 
   const delta = (t: SnapshotTeam): Delta => {
@@ -101,7 +101,7 @@ export function buildView(engine: BoardEngine, { mode, myTeam }: ViewOptions) {
       const st = (code != null && STATUS[code]) || UNKNOWN_STATUS;
       return {
         name,
-        l: letters[name],
+        l: catalog[name]?.l ?? "?",
         label: st.label,
         short: st.short,
         color: st.c,
@@ -125,7 +125,8 @@ export function buildView(engine: BoardEngine, { mode, myTeam }: ViewOptions) {
     const p = L.pos.get(t.id);
     if (!p) return [];
     const flashing = (engine.flash[t.id] ?? 0) > now;
-    const glowing = (engine.glow[t.id] ?? 0) > now;
+    const g = engine.glow[t.id];
+    const glowing = !!g && g.until > now;
     const shielded = engine.isShielded(t.id, now);
     const mine = t.id === myTeam;
 
@@ -138,8 +139,8 @@ export function buildView(engine: BoardEngine, { mode, myTeam }: ViewOptions) {
       sh.unshift(`0 0 18px ${SHIELD.a(0.45)}`);
     }
     if (glowing) {
-      border = "oklch(0.8 0.12 205)";
-      sh.unshift("0 0 16px oklch(0.8 0.12 205 / 0.5)");
+      border = g.color;
+      sh.unshift(`0 0 16px ${g.glow}`);
     }
     if (flashing) {
       border = RED.c;
@@ -217,7 +218,9 @@ export function buildView(engine: BoardEngine, { mode, myTeam }: ViewOptions) {
     topN,
     hasMyTeam: !!me,
     myRow: me && !ranked.slice(0, topN).includes(me) ? rankRow(me) : null,
-    services: services.map((name) => ({ name, l: letters[name] })),
+    services: services.flatMap((name) => (catalog[name] ? [catalog[name]] : [])),
+    /** API присылает serv_name у атак — дуги цветные, легенда «цвет атаки». */
+    attackColors: attacks.some((a) => a.service),
     showShieldLegend: engine.shieldsSeen,
     teamFilter: tf,
     teamOptions: [...teams].sort((a, b) => a.id - b.id).map((t) => ({ id: t.id, label: t.name })),

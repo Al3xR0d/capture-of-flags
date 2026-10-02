@@ -52,7 +52,8 @@ npm run lint
 ### Контракт
 
 `GET scoreboard` → `{ NumRound, TeamData[] }`, где команда —
-`{ team_id, team_name, team_pos, ServData[{ serv_name, serv_status }], AttackData[{ victeam_id, victeam_name, victeam_cflag }] }`.
+`{ team_id, team_name, team_pos, ServData[{ serv_name, serv_status }], AttackData[{ victeam_id, victeam_name, victeam_cflag, serv_name? }] }`.
+`AttackData[].serv_name` — опционально: если есть, дуга атаки красится в цвет сервиса, иначе нейтральная.
 Статусы — коды ForcAD: 101 UP, 102 CORRUPT, 103 MUMBLE, 104 DOWN, 110 CHECK FAILED.
 Сервисы берутся из ответа (в порядке появления).
 

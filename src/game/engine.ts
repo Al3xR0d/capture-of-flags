@@ -1,4 +1,7 @@
-import { ACCENT, ARC_LIFE, ARC_TRAVEL, BOWS, CARD_H, CARD_W, RED, SHIELD, SHIELD_LIFE, SPREAD } from "./constants";
+import {
+  ACCENT, ARC_LIFE, ARC_TRAVEL, BOWS, CARD_H, CARD_W, RED, SHIELD, SHIELD_LIFE, SPREAD,
+  serviceCatalog, type ServiceInfo, type Tone,
+} from "./constants";
 import { computeLayout } from "./layout";
 import type { Arc, Attack, ConnectionState, MapLayout, ShieldPulse, Snapshot } from "./types";
 import { bz, type Bezier } from "./utils";
@@ -35,8 +38,10 @@ export class BoardEngine {
   shields: ShieldPulse[] = [];
   /** team id → до какого момента подсвечена как жертва. */
   flash: Record<number, number> = {};
-  /** team id → до какого момента подсвечена как атакующая. */
-  glow: Record<number, number> = {};
+  /** team id → подсветка атакующей цветом сервиса. */
+  glow: Record<number, { until: number; color: string; glow: string }> = {};
+  /** Буква и цвет каждого сервиса текущего снапшота. */
+  catalog: Record<string, ServiceInfo> = {};
 
   W = 1200;
   H = 800;
@@ -102,6 +107,7 @@ export class BoardEngine {
     const ids = snap.teams.map((t) => t.id);
     const sameTeams = prev && prev.teams.length === ids.length && prev.teams.every((t, i) => t.id === ids[i]);
     this.snapshot = snap;
+    this.catalog = serviceCatalog(snap.services);
     if (!sameTeams) this.layout = computeLayout(this.W, this.H, ids);
 
     this.connection = "live";
@@ -158,7 +164,8 @@ export class BoardEngine {
       pull: 0.22 + Math.random() * 0.22,
       bow: BOWS[this.slot++ % BOWS.length],
     });
-    this.glow[a.from] = now + 900;
+    const tone = this.toneOf(a);
+    this.glow[a.from] = { until: now + 900, color: tone.c, glow: tone.a(0.5) };
     this.bump(950);
   }
 
@@ -195,6 +202,11 @@ export class BoardEngine {
   }
 
   // ── производные ────────────────────────────────────────────────────────
+
+  /** Цвет атаки: цвет сервиса, если API его прислал, иначе нейтральный. */
+  toneOf(a: Attack): Tone {
+    return (a.service && this.catalog[a.service]) || ACCENT;
+  }
 
   isShielded(team: number, now: number) {
     return this.shields.some((s) => s.team === team && now - s.born < SHIELD_LIFE);
@@ -301,7 +313,7 @@ export class BoardEngine {
       const out = e.from === hov;
       ctx.save();
       ctx.globalAlpha = 0.6;
-      ctx.strokeStyle = out ? ACCENT.c : RED.c;
+      ctx.strokeStyle = out ? this.toneOf(e).c : RED.c;
       ctx.lineWidth = 1.3;
       if (!out) ctx.setLineDash([4, 4]);
       this.path(ctx, g, g.t0, g.t1);
@@ -330,10 +342,12 @@ export class BoardEngine {
       const fade = age < ARC_LIFE - 900 ? 1 : Math.max(0, (ARC_LIFE - age) / 900);
       const dim = hov != null && a.from !== hov && a.to !== hov ? 0.1 : 1;
       const w = 1.5 + Math.min(a.flags - 1, 4) * 0.6;
+      const col = this.toneOf(a);
+      const svc = a.service ? this.catalog[a.service] : undefined;
 
       ctx.save();
       ctx.lineCap = "round";
-      ctx.strokeStyle = ACCENT.c;
+      ctx.strokeStyle = col.c;
       // Ореол + след.
       ctx.globalAlpha = fade * dim * 0.16;
       ctx.lineWidth = w + 5;
@@ -351,7 +365,7 @@ export class BoardEngine {
         this.path(ctx, g, Math.max(g.t0, head - 0.12), head);
         ctx.stroke();
         const q = bz(g, head);
-        ctx.shadowColor = ACCENT.c;
+        ctx.shadowColor = col.c;
         ctx.shadowBlur = 14;
         ctx.fillStyle = "oklch(0.98 0.01 250)";
         ctx.beginPath();
@@ -370,7 +384,7 @@ export class BoardEngine {
         const an = Math.atan2(q.y - q2.y, q.x - q2.x);
         const sz = 7 + Math.min(a.flags - 1, 4);
         ctx.globalAlpha = fade * dim;
-        ctx.fillStyle = ACCENT.c;
+        ctx.fillStyle = col.c;
         ctx.beginPath();
         ctx.moveTo(q.x, q.y);
         ctx.lineTo(q.x - sz * Math.cos(an - 0.42), q.y - sz * Math.sin(an - 0.42));
@@ -388,22 +402,37 @@ export class BoardEngine {
         }
       }
 
-      // Бейдж с количеством флагов у атакующего.
+      // Бейдж у атакующего: буква сервиса (если известен), иначе число флагов.
       const s0 = bz(g, g.t0);
       const r = 9 * Math.max(0.85, sc);
       ctx.globalAlpha = fade * dim;
       ctx.fillStyle = "oklch(0.16 0.02 255)";
-      ctx.strokeStyle = ACCENT.c;
+      ctx.strokeStyle = col.c;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.arc(s0.x, s0.y, r, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-      ctx.fillStyle = ACCENT.c;
+      ctx.fillStyle = col.c;
       ctx.font = `700 ${Math.round(r * 1.1)}px "IBM Plex Mono", monospace`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(String(a.flags), s0.x, s0.y + 0.5);
+      ctx.fillText(svc ? svc.l : String(a.flags), s0.x, s0.y + 0.5);
+
+      // Сервис известен и флагов больше одного — «×N» рядом с бейджем.
+      if (svc && a.flags > 1) {
+        const txt = `×${a.flags}`;
+        ctx.font = `700 ${Math.round(r * 0.95)}px "IBM Plex Mono", monospace`;
+        const tw = ctx.measureText(txt).width + 8;
+        const px = s0.x + r + 2;
+        ctx.fillStyle = col.c;
+        ctx.beginPath();
+        ctx.roundRect(px, s0.y - r * 0.7, tw, r * 1.4, 3);
+        ctx.fill();
+        ctx.fillStyle = "oklch(0.16 0.02 255)";
+        ctx.textAlign = "left";
+        ctx.fillText(txt, px + 4, s0.y + 0.5);
+      }
       ctx.restore();
     }
   }

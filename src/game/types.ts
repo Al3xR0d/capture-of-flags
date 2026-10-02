@@ -10,6 +10,8 @@ export interface Attack {
   from: number;
   to: number;
   flags: number;
+  /** serv_name, если API его прислал. */
+  service?: string;
 }
 
 /** Нормализованный ответ API за один опрос. */

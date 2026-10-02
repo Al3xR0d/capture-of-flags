@@ -36,10 +36,14 @@ export function createMockScoreboard(teamCount: number) {
       for (let i = 0; i < n; i++) {
         const victim = base[Math.floor(Math.random() * base.length)];
         if (victim.team_id === team.team_id || attacks.some((a) => a.victeam_id === victim.team_id)) continue;
+        const vst = statuses.get(victim.team_id)!;
+        const open = victim.ServData.filter((_, k) => vst[k] !== 104);
+        if (!open.length) continue;
         attacks.push({
           victeam_id: victim.team_id,
           victeam_name: victim.team_name,
           victeam_cflag: 1 + Math.floor(Math.random() * 3),
+          serv_name: open[Math.floor(Math.random() * open.length)].serv_name,
         });
       }
 

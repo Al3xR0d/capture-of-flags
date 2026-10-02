@@ -32,23 +32,35 @@ export const RED = STATUS[104];
 export const ACCENT = mk(0.8, 0.12, 205);
 export const SHIELD = mk(0.82, 0.09, 225);
 
-/** Буквы для известных сервисов; для остальных — первая свободная буква имени. */
-const SERVICE_LETTERS: Record<string, string> = {
-  VibeAura: "V",
-  BioForge: "B",
-  SmartHome: "H",
-  SleepCaps: "S",
-  SKUDS: "K",
+export interface ServiceInfo extends Tone {
+  name: string;
+  l: string;
+}
+
+/** Известные сервисы: буква + цвет атаки. */
+const KNOWN_SERVICES: Record<string, { l: string; tone: Tone }> = {
+  VibeAura: { l: "V", tone: mk(0.8, 0.12, 205) },
+  BioForge: { l: "B", tone: mk(0.72, 0.15, 258) },
+  SmartHome: { l: "H", tone: mk(0.72, 0.17, 300) },
+  SleepCaps: { l: "S", tone: mk(0.75, 0.17, 342) },
+  SKUDS: { l: "K", tone: mk(0.8, 0.12, 178) },
 };
 
-export function serviceLetters(services: string[]): Record<string, string> {
-  const used = new Set<string>();
-  const res: Record<string, string> = {};
+/** Цвета для сервисов, которых нет в KNOWN_SERVICES. */
+const SPARE_TONES = [mk(0.92, 0.03, 250), mk(0.78, 0.14, 130), mk(0.76, 0.13, 25), mk(0.8, 0.1, 230)];
+
+/** Буква и цвет каждого сервиса; неизвестным — первая свободная буква имени и свободный цвет. */
+export function serviceCatalog(services: string[]): Record<string, ServiceInfo> {
+  const usedL = new Set<string>();
+  const res: Record<string, ServiceInfo> = {};
+  let spare = 0;
   for (const name of services) {
-    const candidates = [SERVICE_LETTERS[name], ...name.toUpperCase().replace(/[^A-ZА-Я0-9]/g, "")].filter(Boolean);
-    const l = candidates.find((c) => !used.has(c)) ?? "?";
-    used.add(l);
-    res[name] = l;
+    const known = KNOWN_SERVICES[name];
+    const candidates = [known?.l, ...name.toUpperCase().replace(/[^A-ZА-Я0-9]/g, "")].filter(Boolean) as string[];
+    const l = candidates.find((c) => !usedL.has(c)) ?? "?";
+    usedL.add(l);
+    const tone = known?.tone ?? SPARE_TONES[spare++ % SPARE_TONES.length];
+    res[name] = { name, l, ...tone };
   }
   return res;
 }

@@ -34,7 +34,9 @@ export function normalizeScoreboard(raw: unknown): Snapshot | null {
       const to = num(a.victeam_id);
       const flags = num(a.victeam_cflag) ?? 1;
       if (to == null || to === id || flags <= 0) continue;
-      attacks.push({ from: id, to, flags });
+      const service = typeof a.serv_name === "string" && a.serv_name ? a.serv_name : undefined;
+      if (service && !services.includes(service)) services.push(service);
+      attacks.push({ from: id, to, flags, service });
     }
 
     teams.push({

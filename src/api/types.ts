@@ -16,6 +16,8 @@ export type AttackData = {
   victeam_name: string;
   /** Сколько флагов украдено у жертвы. */
   victeam_cflag: number;
+  /** Через какой сервис украдены флаги (опционально — тогда дуга нейтрального цвета). */
+  serv_name?: string;
 };
 
 export type TeamData = {

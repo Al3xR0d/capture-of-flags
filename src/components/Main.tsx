@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import "../assets/styles.css";
 import { getRandomMockData, type ServerResponse as MockServerResponse } from "../mockData";
+import { computeTeamLayouts } from "../teamLayout";
 import { Arrow } from "./Arrow";
 import { Shield } from "./Shield.tsx";
 
@@ -62,39 +63,16 @@ const statusTranslate: Record<TeamServiceStatus, string> = {
   110: "yellow-status"
 };
 
-const flagOffsets = [
-  { x: 673, y: 85 },
-  { x: 846, y: 236 },
-  { x: 934, y: 381 },
-  { x: 934, y: 570 },
-  { x: 877, y: 691 },
-  { x: 763, y: 831 },
-  { x: 618, y: 925 },
-  { x: 415, y: 925 },
-  { x: 222, y: 856 },
-  { x: 99, y: 722 },
-  { x: 68, y: 546 },
-  { x: 60, y: 372 },
-  { x: 116, y: 229 },
-  { x: 263, y: 146 },
-  { x: 460, y: 88 }
-];
-
-const typeCenterOffset: Record<1 | 2 | 3, { x: number; y: number }> = {
-  1: { x: 5, y: 10 },
-  2: { x: 5, y: 10 },
-  3: { x: 5, y: 10 }
-};
-
-const getTeamTypeById = (teamId: number): 1 | 2 | 3 => {
-  return (((teamId - 1) % 3) + 1) as 1 | 2 | 3;
-};
-
-const getTeamCenter = (teamId: number) => {
-  const base = flagOffsets[teamId - 1];
-  const type = getTeamTypeById(teamId);
-  const off = typeCenterOffset[type];
-  return { x: base.x + off.x, y: base.y + off.y };
+const getDashboardQuery = () => {
+  if (typeof window === "undefined") {
+    return { useMockData: false, mockTeamCount: 16 };
+  }
+  const params = new URLSearchParams(window.location.search);
+  const teamsParam = Number(params.get("teams"));
+  return {
+    useMockData: params.get("mock") === "1",
+    mockTeamCount: Number.isFinite(teamsParam) && teamsParam > 0 ? teamsParam : 16
+  };
 };
 
 const extractTeamIdFromShieldKey = (key: string): number | null => {
@@ -109,8 +87,8 @@ export default function MainScreen() {
   const rightLegendRef = useRef<HTMLImageElement | null>(null);
   const [round, setRound] = useState<number>(0);
   const [scale, setScale] = useState<number>(1);
-  const [useMockData] = useState<boolean>(false); // Переключатель для моковых данных
-  const [useTestShieldData] = useState<boolean>(false); // Переключатель для моковых данных щитов
+  const [{ useMockData, mockTeamCount }] = useState(getDashboardQuery);
+  const [teams, setTeams] = useState<TeamData[]>([]);
   const [teamStatuses, setTeamStatuses] = useState<
     Record<number, Partial<Record<ServiceData["serv_name"], TeamServiceStatus>>>
   >({});
@@ -127,31 +105,12 @@ export default function MainScreen() {
   const ROUND_MS = 150000;
   const ATTACK_MS = 120000;
   const DEFENSE_MS = ROUND_MS - ATTACK_MS;
-  const ARROW_TTL_MS = 4000; // время жизни стрелки
-  const SHIELD_TTL_MS = 3000; // время жизни одного импульса щита
-  const ARROW_STOP_BEFORE_PX = 0; // отступ наконечника до цели
-  // const [lastVictimTeamIds, setLastVictimTeamIds] = useState<number[]>([]);
+  const ARROW_TTL_MS = 4000;
+  const SHIELD_TTL_MS = 3000;
+  const ARROW_STOP_BEFORE_PX = 48;
+  const SHIELD_RADIUS = 56;
 
-  const teamNames = useMemo(
-    () => [
-      "T3amW1pe",
-      "M3d03d",
-      "Some0neCyberS",
-      "RedFlagRadar",
-      "MeOow5_T3aM_CaT5",
-      "researchers_1054",
-      "JIEBOE_yXO",
-      "AppSECeRS",
-      "TA57",
-      "Cringe4Shell",
-      "Sn4ke_3aters",
-      "BI.ZONE Team",
-      "SEC.T.A.",
-      "Assume Birc",
-      "IskIn"
-    ],
-    []
-  );
+  const teamLayouts = useMemo(() => computeTeamLayouts(teams), [teams]);
 
   useEffect(() => {
     const updateScale = () => {
@@ -175,25 +134,25 @@ export default function MainScreen() {
     updateScale();
     window.addEventListener("resize", updateScale);
 
-    const getShieldData = async () => {
-      if (useTestShieldData) {
-        // тестовые данные для щитов
-        const testData = {
-          "team-1": true,   // Команда 1 должна показывать щит
-          "team-3": false,  // Команда 3 не должна показывать щит
-          "team-4": true,   // Команда 4 должна показывать щит
-          "team-7": true,   // Команда 7 должна показывать щит
-          "team-12": false, // Команда 12 не должна показывать щит
-          "team-15": true   // Команда 15 должна показывать щит
-        };
-        console.log("Используем тестовые данные щитов:", testData);
-        setServerShieldData(testData);
+    const getMockShieldData = (teamIds: number[]): ServerShieldResponse => {
+      return teamIds.reduce<ServerShieldResponse>((acc, teamId) => {
+        acc[`team-${teamId}`] = true;
+        return acc;
+      }, {});
+    };
+
+    const getShieldData = async (teamIds?: number[]) => {
+      if (useMockData) {
+        const ids =
+          teamIds && teamIds.length > 0
+            ? teamIds
+            : Array.from({ length: mockTeamCount }, (_, index) => index + 1);
+        setServerShieldData(getMockShieldData(ids));
         return;
       }
 
       try {
         const response = await axios.get<ServerShieldResponse>(shieldServerIp);
-        console.log("Данные щитов с сервера:", response.data);
         setServerShieldData(response.data);
       } catch (error) {
         console.error("Ошибка запроса данных щитов: ", error);
@@ -210,10 +169,7 @@ export default function MainScreen() {
         let response: ServerResponse | MockServerResponse;
         
         if (useMockData) {
-          // моки
-          response = getRandomMockData();
-
-     
+          response = getRandomMockData(mockTeamCount);
         } else {
           // реальный API
           const apiResponse = await axios.get<ServerResponse>(serverIp);
@@ -222,13 +178,14 @@ export default function MainScreen() {
         }
         
         setRound(response.NumRound);
-        const teams = response.TeamData;
+        const nextTeams = response.TeamData;
+        setTeams(nextTeams);
         setTeamStatuses(prev => {
           const next: Record<
             number,
             Partial<Record<ServiceData["serv_name"], TeamServiceStatus>>
           > = { ...prev };
-          teams.forEach(team => {
+          nextTeams.forEach(team => {
             const statuses: Partial<
               Record<ServiceData["serv_name"], TeamServiceStatus>
             > = { ...next[team.team_id] };
@@ -244,7 +201,7 @@ export default function MainScreen() {
         if (showAttackText && attackTextStartTime > 0) {
           const elapsed = Date.now() - attackTextStartTime;
           const msLeft = Math.max(0, ATTACK_MS - elapsed);
-          teams.forEach(team => {
+          nextTeams.forEach(team => {
             team.AttackData.forEach(attack => {
               createArrow(team.team_id, attack.victeam_id, attack.victeam_cflag, msLeft);
             });
@@ -298,7 +255,7 @@ export default function MainScreen() {
       window.removeEventListener("resize", updateScale);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [useMockData, useTestShieldData]);
+  }, [useMockData, mockTeamCount]);
 
   // Переключение фаз
   useEffect(() => {
@@ -386,7 +343,7 @@ export default function MainScreen() {
           style={{ width: 1000 * scale, height: 1000 * scale }}
         >
           <div
-            className="wrapper"
+            className={`wrapper${teams.length >= 12 ? " teams-many" : ""}`}
             id="wrapper"
             ref={wrapperRef}
             style={{ transform: `scale(${scale})`, transformOrigin: "top left" }}
@@ -406,16 +363,17 @@ export default function MainScreen() {
             }}
           >
             {showAttackText && arrows.map(arrow => {
-              const fromPos = getTeamCenter(arrow.fromTeamId);
-              const toPos = getTeamCenter(arrow.toTeamId);
-              
+              const fromPos = teamLayouts.get(arrow.fromTeamId);
+              const toPos = teamLayouts.get(arrow.toTeamId);
+              if (!fromPos || !toPos) return null;
+
               return (
                 <Arrow
                   key={arrow.id}
-                  fromX={fromPos.x}
-                  fromY={fromPos.y}
-                  toX={toPos.x}
-                  toY={toPos.y}
+                  fromX={fromPos.centerX}
+                  fromY={fromPos.centerY}
+                  toX={toPos.centerX}
+                  toY={toPos.centerY}
                   flagCount={arrow.flagCount}
                   isAnimated={true}
                   stopBeforePx={ARROW_STOP_BEFORE_PX}
@@ -437,26 +395,30 @@ export default function MainScreen() {
             }}
           >
             {!showAttackText && shields.map(shield => {
-              const pos = getTeamCenter(shield.teamId);
+              const pos = teamLayouts.get(shield.teamId);
+              if (!pos) return null;
               return (
-                <Shield key={shield.id} cx={pos.x} cy={pos.y} radius={56} />
+                <Shield
+                  key={shield.id}
+                  cx={pos.centerX}
+                  cy={pos.centerY}
+                  radius={SHIELD_RADIUS}
+                />
               );
             })}
           </svg>
-          {[...Array(15)].map((_, idx) => {
-            const teamIndex = idx + 1;
-            const typeClass = (idx % 3 + 1) as 1 | 2 | 3;
-            const extra = [8, 9, 10, 11, 12, 13, 14].includes(teamIndex)
-              ? " alt-name"
-              : "";
-            const statuses = teamStatuses[teamIndex] || {};
+          {teams.map(team => {
+            const layout = teamLayouts.get(team.team_id);
+            if (!layout) return null;
+            const statuses = teamStatuses[team.team_id] || {};
             return (
               <div
-                key={teamIndex}
-                className={`team team${teamIndex}${extra} type-${typeClass}`}
+                key={team.team_id}
+                className={`team team${team.team_id} type-${layout.type}`}
+                style={{ top: layout.top, left: layout.left }}
               >
-                <p className="teamName">
-                  {teamNames[idx] || ""}
+                <p className={`teamName team-label-${layout.labelSide}`}>
+                  {team.team_name}
                 </p>
                 <div
                   className={`service-status v-cell ${statuses["VibeAura"]

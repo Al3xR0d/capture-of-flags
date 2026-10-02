@@ -267,35 +267,282 @@ export const mockData: ServerResponse = {
         { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 },
         { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 }
       ]
+    },
+    {
+      team_id: 16,
+      team_name: "OKKO1",
+      team_pos: 16,
+      ServData: [
+        { serv_name: "VibeAura", serv_status: 110 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
+      ],
+      AttackData: [
+        { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 },
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 }
+      ]
+    },
+    {
+      team_id: 17,
+      team_name: "OKKO2",
+      team_pos: 17,
+      ServData: [
+        { serv_name: "VibeAura", serv_status: 110 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
+      ],
+      AttackData: [
+        { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 },
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 }
+      ]
+    },
+    {
+      team_id: 18,
+      team_name: "OKKO3",
+      team_pos: 18,
+      ServData: [
+        { serv_name: "VibeAura", serv_status: 110 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
+      ],
+      AttackData: [
+        { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 },
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 }
+      ]
+    },
+    {
+      team_id: 19,
+      team_name: "OKKO4",
+      team_pos: 19,
+      ServData: [
+        { serv_name: "VibeAura", serv_status: 110 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
+      ],
+      AttackData: [
+        { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 },
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 }
+      ]
+    },
+    {
+      team_id: 20,
+      team_name: "OKKO5",
+      team_pos: 20,
+      ServData: [
+        { serv_name: "VibeAura", serv_status: 110 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
+      ],
+      AttackData: [
+        { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 },
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 }
+      ]
+    },
+    {
+      team_id: 21,
+      team_name: "OKKO6",
+      team_pos: 21,
+      ServData: [
+        { serv_name: "VibeAura", serv_status: 110 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
+      ],
+      AttackData: [
+        { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 },
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 }
+      ]
+    },
+    {
+      team_id: 22,
+      team_name: "OKKO7",
+      team_pos: 22,
+      ServData: [
+        { serv_name: "VibeAura", serv_status: 110 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
+      ],
+      AttackData: [
+        { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 },
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 }
+      ]
+    },
+    {
+      team_id: 23,
+      team_name: "OKKO8",
+      team_pos: 23,
+      ServData: [
+        { serv_name: "VibeAura", serv_status: 110 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
+      ],
+      AttackData: [
+        { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 },
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 }
+      ]
+    },
+    {
+      team_id: 24,
+      team_name: "OKKO9",
+      team_pos: 24,
+      ServData: [
+        { serv_name: "VibeAura", serv_status: 110 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
+      ],
+      AttackData: [
+        { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 },
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 }
+      ]
+    },
+    {
+      team_id: 25,
+      team_name: "OKKO10",
+      team_pos: 25,
+      ServData: [
+        { serv_name: "VibeAura", serv_status: 110 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
+      ],
+      AttackData: [
+        { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 },
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 }
+      ]
+    },
+    {
+      team_id: 26,
+      team_name: "OKKO11",
+      team_pos: 26,
+      ServData: [
+        { serv_name: "VibeAura", serv_status: 110 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
+      ],
+      AttackData: [
+        { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 },
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 }
+      ]
+    },
+    {
+      team_id: 27,
+      team_name: "OKKO12",
+      team_pos: 27,
+      ServData: [
+        { serv_name: "VibeAura", serv_status: 110 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
+      ],
+      AttackData: [
+        { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 },
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 }
+      ]
+    },
+    {
+      team_id: 28,
+      team_name: "OKKO13",
+      team_pos: 28,
+      ServData: [
+        { serv_name: "VibeAura", serv_status: 110 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
+      ],
+      AttackData: [
+        { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 },
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 }
+      ]
+    },
+    {
+      team_id: 29,
+      team_name: "OKKO14",
+      team_pos: 29,
+      ServData: [
+        { serv_name: "VibeAura", serv_status: 110 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
+      ],
+      AttackData: [
+        { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 },
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 }
+      ]
+    },
+    {
+      team_id: 30,
+      team_name: "OKKO15",
+      team_pos: 30,
+      ServData: [
+        { serv_name: "VibeAura", serv_status: 110 },
+        { serv_name: "BioForge", serv_status: 101 },
+        { serv_name: "SmartHome", serv_status: 101 },
+        { serv_name: "SleepCaps", serv_status: 101 },
+        { serv_name: "SKUDS", serv_status: 101 }
+      ],
+      AttackData: [
+        { victeam_id: 11, victeam_name: "Sn4ke_3aters", victeam_cflag: 1 },
+        { victeam_id: 6, victeam_name: "researchers_1054", victeam_cflag: 1 }
+      ]
     }
   ]
 };
 
-// Функция для получения случайных моковых данных (для тестирования)
-export const getRandomMockData = (): ServerResponse => {
-  const baseData = { ...mockData };
-  
-  // Генерируем случайные статусы для сервисов
-  baseData.TeamData.forEach(team => {
-    team.ServData.forEach(service => {
+export const getRandomMockData = (
+  teamCount = mockData.TeamData.length
+): ServerResponse => {
+  const count = Math.max(1, Math.min(teamCount, mockData.TeamData.length));
+  const teams = mockData.TeamData.slice(0, count).map((team) => ({
+    ...team,
+    ServData: team.ServData.map((service) => ({ ...service })),
+    AttackData: [] as AttackData[]
+  }));
+
+  teams.forEach((team) => {
+    team.ServData.forEach((service) => {
       const statuses: TeamServiceStatus[] = [101, 102, 103, 104, 110];
-      service.serv_status = statuses[Math.floor(Math.random() * statuses.length)];
+      service.serv_status =
+        statuses[Math.floor(Math.random() * statuses.length)];
     });
-    
-    // Генерируем случайные атаки
-    const attackCount = Math.floor(Math.random() * 3); // 0-2 атаки
-    team.AttackData = [];
+
+    const attackCount = Math.floor(Math.random() * Math.min(3, teams.length));
     for (let i = 0; i < attackCount; i++) {
-      const targetTeamId = Math.floor(Math.random() * 15) + 1;
-      if (targetTeamId !== team.team_id) {
+      const target = teams[Math.floor(Math.random() * teams.length)];
+      if (target.team_id !== team.team_id) {
         team.AttackData.push({
-          victeam_id: targetTeamId,
-          victeam_name: baseData.TeamData[targetTeamId - 1].team_name,
-          victeam_cflag: 1
+          victeam_id: target.team_id,
+          victeam_name: target.team_name,
+          victeam_cflag: 1 + Math.floor(Math.random() * 3)
         });
       }
     }
   });
-  
-  return baseData;
+
+  return {
+    NumRound: mockData.NumRound,
+    TeamData: teams
+  };
 };

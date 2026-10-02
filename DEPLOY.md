@@ -20,6 +20,12 @@ docker-compose -f docker-compose.prod.yml logs -f dashboard-frontend
 - **Основное приложение:** http://localhost:80
 - **Логи (если включен мониторинг):** http://localhost:8080
 
+## Адреса API
+
+Источники данных задаются в `public/config.json` (см. README). В
+`docker-compose.prod.yml` файл смонтирован в контейнер, поэтому после правки
+достаточно обновить страницу борды — пересборка не нужна.
+
 ## Расширенные опции
 
 ### SSL/HTTPS развертывание

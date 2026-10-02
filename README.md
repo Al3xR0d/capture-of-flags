@@ -1,69 +1,84 @@
-# React + TypeScript + Vite
+# CTF Live Map
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Борда Attack-Defence: карта команд с анимированными атаками, статусами сервисов
+и щитами Wazuh. React 19 + Vite + TypeScript.
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev     # дев-сервер
+npm run build   # typecheck + сборка в dist/
+npm run lint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Деплой — см. [DEPLOY.md](DEPLOY.md).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Режимы (URL-параметры)
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Параметр        | Что делает                                                        |
+|-----------------|-------------------------------------------------------------------|
+| `mode=screen`   | Режим проектора: без hover/фильтров, ТОП-10. По умолчанию — интерактивный (hover, фильтр по команде, ТОП-5). |
+| `team=N`        | Подсветить свою команду («ВЫ»).                                    |
+| `mock=1`        | Моки вместо API (каждый опрос — новый раунд).                      |
+| `teams=N`       | Сколько команд в моках (по умолчанию 16, максимум 30).             |
+| `poll=MS`       | Период опроса, перекрывает `pollMs` из конфига (в моках по умолчанию 20 с). |
+
+Например: `/?mode=screen`, `/?team=9`, `/?mock=1&teams=30&poll=10000`.
+
+## Источники данных
+
+Адреса читаются в рантайме из [`public/config.json`](public/config.json) — в docker
+файл смонтирован поверх, менять без пересборки:
+
+```json
+{
+  "title": "CTF · Attack-Defence",
+  "pollMs": 150000,
+  "requestTimeoutMs": 10000,
+  "maxArcs": 40,
+  "sources": {
+    "scoreboard": { "url": "http://10.62.0.120:8000/ctfdata/" },
+    "shields": { "url": "http://gitlabapps.ctflab.local:8080/ctf-backend/api/wazuh/activity" }
+  }
+}
 ```
+
+Источник с пустым/отсутствующим `url` выключен. Если источник не ответил или
+ответ невалидный — его данные просто не отображаются:
+
+- **scoreboard** не ответил до первых данных → «НЕТ ДАННЫХ»; после — остаются
+  последние данные, бейдж «НЕТ СВЯЗИ».
+- **shields** не ответил → щитов и их легенды нет.
+
+### Контракт
+
+`GET scoreboard` → `{ NumRound, TeamData[] }`, где команда —
+`{ team_id, team_name, team_pos, ServData[{ serv_name, serv_status }], AttackData[{ victeam_id, victeam_name, victeam_cflag }] }`.
+Статусы — коды ForcAD: 101 UP, 102 CORRUPT, 103 MUMBLE, 104 DOWN, 110 CHECK FAILED.
+Сервисы берутся из ответа (в порядке появления).
+
+`GET shields` → `{ "team-1": true, "team-2": false, ... }`.
+
+Типы — [`src/api/types.ts`](src/api/types.ts), разбор — [`src/api/normalize.ts`](src/api/normalize.ts).
+
+## Как показываются данные
+
+- Каждый ответ — снапшот раунда. Атаки раунда раскидываются дугами по окну
+  опроса (85% от `pollMs`), один раз на раунд; число на дуге — `victeam_cflag`.
+- Команды с `true` у Wazuh получают один пульс щита за раунд в случайный момент окна.
+- ↑/↓ — изменение `team_pos` относительно прошлого раунда.
+- Карточки расставлены по `team_id` и не прыгают при смене мест.
+
+## Структура
+
+```
+src/
+  api/         types.ts (контракт), normalize.ts, sources.ts (http/mock), mock*.ts
+  game/        engine.ts (состояние, расписание дуг/щитов, отрисовка канваса),
+               view.ts (данные для UI), layout.ts, constants.ts
+  hooks/       useBoard.ts — движок + опрос источников
+  components/  Header, MapView, TeamCard, TeamTooltip, Sidebar
+  config.ts    config.json + URL-параметры
+```
+
+Новый источник — реализовать `Source<T>` в `src/api/sources.ts` и
+нормализатор в `normalize.ts`; UI показывает только то, что пришло.

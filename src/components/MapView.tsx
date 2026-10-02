@@ -1,0 +1,76 @@
+import { useCallback, useEffect, useRef } from "react";
+import type { BoardEngine } from "../game/engine";
+import type { BoardView } from "../game/view";
+import { TeamCard } from "./TeamCard";
+import { TeamTooltip } from "./TeamTooltip";
+
+interface Props {
+  engine: BoardEngine;
+  view: BoardView;
+}
+
+export function MapView({ engine, view }: Props) {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const el = mapRef.current;
+    if (!el) return;
+    const measure = () => {
+      const r = el.getBoundingClientRect();
+      engine.setSize(r.width, r.height);
+    };
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    measure();
+    return () => ro.disconnect();
+  }, [engine]);
+
+  useEffect(() => {
+    let raf = 0;
+    const tick = (now: number) => {
+      raf = requestAnimationFrame(tick);
+      if (canvasRef.current) engine.draw(canvasRef.current, now);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [engine]);
+
+  const onEnter = useCallback((id: number) => engine.setHover(id), [engine]);
+  const onLeave = useCallback((id: number) => engine.leave(id), [engine]);
+  const interactive = view.mode === "interactive";
+
+  return (
+    <div ref={mapRef} className="map">
+      <div className="map__grid" aria-hidden />
+      <div className="map__ring map__ring--inner" aria-hidden />
+      <div className="map__ring map__ring--outer" aria-hidden />
+      <div className="map__center" aria-hidden />
+      <canvas ref={canvasRef} className="map__arcs" aria-hidden />
+
+      {view.cards.map((c) => (
+        <TeamCard
+          key={c.id}
+          card={c}
+          onEnter={interactive ? onEnter : undefined}
+          onLeave={interactive ? onLeave : undefined}
+        />
+      ))}
+
+      {view.tip && <TeamTooltip tip={view.tip} round={view.round} />}
+
+      {view.cards.length === 0 && (
+        <div className="map__empty" role="status">
+          {view.connection === "offline" ? (
+            <>
+              <div className="map__empty-title">НЕТ ДАННЫХ</div>
+              <div className="map__empty-text">API табло не отвечает, повторим на следующем опросе</div>
+            </>
+          ) : (
+            <div className="map__empty-title">ОЖИДАНИЕ ДАННЫХ…</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

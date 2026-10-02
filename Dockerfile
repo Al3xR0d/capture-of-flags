@@ -1,5 +1,5 @@
 # Multi-stage build для React приложения
-FROM node:18-alpine AS build
+FROM node:22-alpine AS build
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
@@ -7,8 +7,8 @@ WORKDIR /app
 # Копируем package.json и package-lock.json
 COPY package*.json ./
 
-# Устанавливаем зависимости
-RUN npm ci --only=production
+# Устанавливаем зависимости (dev-зависимости нужны для сборки: tsc, vite)
+RUN npm ci
 
 # Копируем исходный код
 COPY . .

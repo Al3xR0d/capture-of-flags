@@ -1,0 +1,35 @@
+/**
+ * Контракт старого API борды (GET /ctfdata/ и Wazuh activity).
+ * Не менять без бэкенда — нормализация в normalize.ts.
+ */
+
+/** Статусы чекера ForcAD: 101 UP, 102 CORRUPT, 103 MUMBLE, 104 DOWN, 110 CHECK FAILED. */
+export type TeamServiceStatus = 101 | 102 | 103 | 104 | 110;
+
+export type ServiceData = {
+  serv_name: string;
+  serv_status: TeamServiceStatus;
+};
+
+export type AttackData = {
+  victeam_id: number;
+  victeam_name: string;
+  /** Сколько флагов украдено у жертвы. */
+  victeam_cflag: number;
+};
+
+export type TeamData = {
+  team_id: number;
+  team_name: string;
+  team_pos: number;
+  ServData: ServiceData[];
+  AttackData: AttackData[];
+};
+
+export type ServerResponse = {
+  NumRound: number;
+  TeamData: TeamData[];
+};
+
+/** Wazuh: `{ "team-1": true, "team-2": false, ... }`. */
+export type ServerShieldResponse = Record<string, boolean>;

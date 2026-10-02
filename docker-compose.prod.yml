@@ -11,6 +11,9 @@ services:
       - "80:80"
     environment:
       - NODE_ENV=production
+    volumes:
+      # Адреса API меняются без пересборки — правим public/config.json и перезапускаем
+      - ./public/config.json:/usr/share/nginx/html/config.json:ro
     restart: unless-stopped
     networks:
       - dashboard-network

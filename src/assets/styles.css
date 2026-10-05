@@ -55,6 +55,11 @@ img {
     position: relative;
     height: 1000px;
     margin: 0;
+    overflow: visible;
+}
+
+.wrapper.teams-many .teamName {
+    font-size: 26px;
 }
 
 .wrapper-outer {
@@ -95,79 +100,39 @@ img {
 }
 
 
-.team1 {
-    top: 49px;
-    left: 622px;
+.teamName {
+    position: absolute;
+    margin: 0;
+    white-space: nowrap;
+    pointer-events: none;
 }
 
-.team2 {
-    top: 192px;
-    left: 786px;
+.team-label-right {
+    left: 118px;
+    top: 30px;
+    text-align: left;
 }
 
-.team3 {
-    top: 365px;
-    left: 870px;
+.team-label-left {
+    right: 118px;
+    left: auto;
+    top: 30px;
+    text-align: right;
 }
 
-.team4 {
-    top: 508px;
-    left: 889px;
+.team-label-top {
+    left: 50%;
+    top: auto;
+    bottom: calc(100% + 4px);
+    transform: translateX(-50%);
+    text-align: center;
 }
 
-.team5 {
-    top: 653px;
-    left: 821px;
-}
-
-.team6 {
-    top: 797px;
-    left: 721px;
-}
-
-.team7 {
-    top: 884px;
-    left: 570px;
-}
-
-.team8 {
-    top: 884px;
-    left: 351px;
-}
-
-.team9 {
-    top: 826px;
-    left: 166px;
-}
-
-.team10 {
-    top: 683px;
-    left: 49px;
-}
-
-.team11 {
-    top: 511px;
-    left: 2px;
-}
-
-.team12 {
-    top: 336px;
-    left: 13px;
-}
-
-.team13 {
-    top: 193px;
-    left: 66px;
-}
-
-.team14 {
-    top: 106px;
-    left: 199px;
-}
-
-.team15 {
-    top: 48px;
-    left: 416px;
+.team-label-bottom {
+    left: 50%;
+    top: calc(100% + 2px);
+    transform: translateX(-50%);
+    text-align: center;
 }
 
 .service-status {
@@ -559,66 +524,13 @@ background-image: none;
     font-family: "SB Sans Display", sans-serif;
     font-weight: 400;
     color: #08BC08;
-    font-size: 40px;
-    min-width: 300px;
+    font-size: 32px;
 }
 
-.type-1 .teamName {
-    margin-top: 72px;
-    margin-left: 100px;
-}
-
-.type-2 .teamName {
-    margin-top: 77px;
-    margin-left: 85px;
-
-}.type-3 .teamName {
-     margin-top: 80px;
-     margin-left: 70px;
- }
-
-.team3 .teamName {
-    transform: translateX(-15px) translateY(0px);
-}
-
-.team8 .teamName {
-    transform: translateX(-300px) translateY(-15px);
-}
-
-.team7 .teamName {
-    transform: translateX(10px) translateY(-15px);
-}
-
-.team6 .teamName {
-    transform: translateX(10px) translateY(-15px);
-}
-
-.team9 .teamName {
-    transform: translateX(-170px) translateY(-30px);
-}
-
-.team10 .teamName {
-    transform: translateX(-330px) translateY(-10px);
-}
-
-.team11 .teamName {
-    transform: translateX(-310px) translateY(-20px);
-}
-
-.team12 .teamName {
-    transform: translateX(-340px) translateY(-20px);
-}
-
-.team13 .teamName {
-    transform: translateX(-260px) translateY(-20px);
-}
-
-.team14 .teamName {
-    transform: translateX(-320px) translateY(-80px);
-}
-
-.team15 .teamName {
-    transform: translateX(-150px) translateY(-100px);
+.logo-cell {
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
 }
 
 

@@ -1,9 +1,30 @@
 import {
-  ACCENT, ARC_LIFE, ARC_TRAVEL, BOWS, CARD_H, CARD_W, FB_TRAVEL, GOLD, LIVE_STAGGER, RED, SHIELD, SHIELD_LIFE, SPREAD,
-  serviceCatalog, type ServiceInfo, type Tone,
+  ACCENT,
+  ARC_LIFE,
+  ARC_TRAVEL,
+  BOWS,
+  CARD_H,
+  CARD_W,
+  FB_TRAVEL,
+  GOLD,
+  LIVE_STAGGER,
+  RED,
+  SHIELD,
+  SHIELD_LIFE,
+  SPREAD,
+  serviceCatalog,
+  type ServiceInfo,
+  type Tone
 } from "./constants";
 import { computeLayout } from "./layout";
-import type { Arc, Attack, ConnectionState, MapLayout, ShieldPulse, Snapshot } from "./types";
+import type {
+  Arc,
+  Attack,
+  ConnectionState,
+  MapLayout,
+  ShieldPulse,
+  Snapshot
+} from "./types";
 import { bz, type Bezier } from "./utils";
 
 type Listener = () => void;
@@ -102,11 +123,23 @@ export class BoardEngine {
     const prev = this.snapshot;
     const newRound = snap.round == null || snap.round !== prev?.round;
     if (prev && newRound) {
-      this.prevPlaces = Object.fromEntries(prev.teams.map((t) => [t.id, t.place]));
+      this.prevPlaces = Object.fromEntries(
+        prev.teams.map((t) => [t.id, t.place])
+      );
+      this.arcs = [];
+      for (const id of this.pending) clearTimeout(id);
+      this.pending.clear();
+      this.shields = [];
+      this.shielded.clear();
+      this.flash = {};
+      this.glow = {};
     }
 
     const ids = snap.teams.map((t) => t.id);
-    const sameTeams = prev && prev.teams.length === ids.length && prev.teams.every((t, i) => t.id === ids[i]);
+    const sameTeams =
+      prev &&
+      prev.teams.length === ids.length &&
+      prev.teams.every((t, i) => t.id === ids[i]);
     this.snapshot = snap;
     this.catalog = serviceCatalog(snap.services);
     if (!sameTeams) this.layout = computeLayout(this.W, this.H, ids);
@@ -114,7 +147,10 @@ export class BoardEngine {
     this.connection = "live";
     this.lastUpdate = Date.now();
 
-    if (!snap.liveAttacks && (snap.round == null || snap.round !== this.spawnedRound)) {
+    if (
+      !snap.liveAttacks &&
+      (snap.round == null || snap.round !== this.spawnedRound)
+    ) {
       this.spawnedRound = snap.round;
       this.scheduleAttacks(snap.attacks);
     }
@@ -130,15 +166,23 @@ export class BoardEngine {
     if (!snap) return;
     const merged = [...snap.attacks];
     for (const a of attacks) {
-      const cur = merged.find((x) => x.from === a.from && x.to === a.to && x.service === a.service);
+      const cur = merged.find(
+        (x) => x.from === a.from && x.to === a.to && x.service === a.service
+      );
       if (cur) {
         const i = merged.indexOf(cur);
-        merged[i] = { ...cur, flags: cur.flags + a.flags, firstBlood: cur.firstBlood || a.firstBlood };
+        merged[i] = {
+          ...cur,
+          flags: cur.flags + a.flags,
+          firstBlood: cur.firstBlood || a.firstBlood
+        };
       } else merged.push(a);
     }
     this.snapshot = { ...snap, attacks: merged };
     const step = attacks.length > 1 ? LIVE_STAGGER / (attacks.length - 1) : 0;
-    attacks.forEach((a, i) => this.later(() => this.addArc(a), i * step, this.timeouts));
+    attacks.forEach((a, i) =>
+      this.later(() => this.addArc(a), i * step, this.timeouts)
+    );
     this.bump();
   }
 
@@ -160,16 +204,30 @@ export class BoardEngine {
     for (const id of teamIds) {
       if (this.shielded.has(id) || !known.has(id)) continue;
       this.shielded.add(id);
-      this.later(() => this.addShield(id), Math.random() * window, this.pending);
+      this.later(
+        () => this.addShield(id),
+        Math.random() * window,
+        this.pending
+      );
     }
     this.bump();
   }
 
   private scheduleAttacks(attacks: Attack[]) {
-    for (const id of this.pending) clearTimeout(id);
-    this.pending.clear();
-    const window = this.opts.pollMs * SPREAD;
-    for (const a of attacks) this.later(() => this.addArc(a), Math.random() * window, this.pending);
+    if (attacks.length === 0) return;
+    const snap = this.snapshot;
+    const roundMs = snap?.timing?.roundTime ? snap.timing.roundTime * 1000 : this.opts.pollMs;
+    const window = roundMs * 0.95;
+    // Перемешиваем атаки, чтобы они шли вперемешку от разных команд и сервисов
+    const shuffled = [...attacks];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    const step = window / (shuffled.length - 1 || 1);
+    const jitter = Math.random() * Math.min(100, window / shuffled.length);
+    for (let i = 0; i < shuffled.length; i++)
+      this.later(() => this.addArc(shuffled[i]), i * step + jitter, this.pending);
   }
 
   private addArc(a: Attack) {
@@ -184,7 +242,7 @@ export class BoardEngine {
       ...a,
       born: now,
       pull: 0.22 + Math.random() * 0.22,
-      bow: BOWS[this.slot++ % BOWS.length],
+      bow: BOWS[this.slot++ % BOWS.length]
     });
     const tone = a.firstBlood ? GOLD : this.toneOf(a);
     this.glow[a.from] = { until: now + 900, color: tone.c, glow: tone.a(0.5) };
@@ -199,10 +257,15 @@ export class BoardEngine {
   // ── ввод ───────────────────────────────────────────────────────────────
 
   setSize(W: number, H: number) {
-    if (!W || (Math.abs(W - this.W) < 0.5 && Math.abs(H - this.H) < 0.5)) return;
+    if (!W || (Math.abs(W - this.W) < 0.5 && Math.abs(H - this.H) < 0.5))
+      return;
     this.W = W;
     this.H = H;
-    this.layout = computeLayout(W, H, this.snapshot?.teams.map((t) => t.id) ?? []);
+    this.layout = computeLayout(
+      W,
+      H,
+      this.snapshot?.teams.map((t) => t.id) ?? []
+    );
     this.bump();
   }
 
@@ -219,7 +282,9 @@ export class BoardEngine {
 
   setTeamFilter(id: number | null) {
     this.teamFilter = id;
-    this.arcs = this.arcs.filter((a) => id == null || a.from === id || a.to === id);
+    this.arcs = this.arcs.filter(
+      (a) => id == null || a.from === id || a.to === id
+    );
     this.bump();
   }
 
@@ -231,7 +296,9 @@ export class BoardEngine {
   }
 
   isShielded(team: number, now: number) {
-    return this.shields.some((s) => s.team === team && now - s.born < SHIELD_LIFE);
+    return this.shields.some(
+      (s) => s.team === team && now - s.born < SHIELD_LIFE
+    );
   }
 
   // ── канвас ─────────────────────────────────────────────────────────────
@@ -246,11 +313,12 @@ export class BoardEngine {
     const dx = p2.x - p0.x;
     const dy = p2.y - p0.y;
     const g = {
-      p0, p2,
+      p0,
+      p2,
       c: {
         x: mx + (this.W / 2 - mx) * pull - dy * bow,
-        y: my + (this.H / 2 - my) * pull + dx * bow,
-      },
+        y: my + (this.H / 2 - my) * pull + dx * bow
+      }
     };
     // Обрезаем кривую по прямоугольникам карточек.
     const hw = (CARD_W / 2) * L.s + 3;
@@ -270,7 +338,12 @@ export class BoardEngine {
     return { ...g, t0, t1 };
   }
 
-  private path(ctx: CanvasRenderingContext2D, g: Bezier, ta: number, tb: number) {
+  private path(
+    ctx: CanvasRenderingContext2D,
+    g: Bezier,
+    ta: number,
+    tb: number
+  ) {
     ctx.beginPath();
     const n = 36;
     for (let i = 0; i <= n; i++) {
@@ -317,7 +390,13 @@ export class BoardEngine {
         ctx.globalAlpha = (1 - k) * (1 - age) * 0.9;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.roundRect(p.x - w / 2 - pad, p.y - h / 2 - pad, w + pad * 2, h + pad * 2, 10 + pad / 2);
+        ctx.roundRect(
+          p.x - w / 2 - pad,
+          p.y - h / 2 - pad,
+          w + pad * 2,
+          h + pad * 2,
+          10 + pad / 2
+        );
         ctx.stroke();
       }
       ctx.restore();
@@ -363,7 +442,8 @@ export class BoardEngine {
       const travel = fb ? FB_TRAVEL : ARC_TRAVEL;
       const pr = Math.min(1, age / travel);
       const head = g.t0 + (g.t1 - g.t0) * (1 - Math.pow(1 - pr, 3));
-      const fade = age < ARC_LIFE - 900 ? 1 : Math.max(0, (ARC_LIFE - age) / 900);
+      const fade =
+        age < ARC_LIFE - 900 ? 1 : Math.max(0, (ARC_LIFE - age) / 900);
       const dim = hov != null && a.from !== hov && a.to !== hov ? 0.1 : 1;
       const w = fb ? 3.2 : 1.5 + Math.min(a.flags - 1, 4) * 0.6;
       const col = fb ? GOLD : this.toneOf(a);
@@ -411,8 +491,14 @@ export class BoardEngine {
         ctx.fillStyle = col.c;
         ctx.beginPath();
         ctx.moveTo(q.x, q.y);
-        ctx.lineTo(q.x - sz * Math.cos(an - 0.42), q.y - sz * Math.sin(an - 0.42));
-        ctx.lineTo(q.x - sz * Math.cos(an + 0.42), q.y - sz * Math.sin(an + 0.42));
+        ctx.lineTo(
+          q.x - sz * Math.cos(an - 0.42),
+          q.y - sz * Math.sin(an - 0.42)
+        );
+        ctx.lineTo(
+          q.x - sz * Math.cos(an + 0.42),
+          q.y - sz * Math.sin(an + 0.42)
+        );
         ctx.closePath();
         ctx.fill();
         const ia = (age - travel) / 600;

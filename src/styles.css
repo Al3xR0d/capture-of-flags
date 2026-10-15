@@ -1,6 +1,6 @@
 :root {
-  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
   --bg: oklch(0.14 0.015 255);
   --bg-header: oklch(0.165 0.018 255);
@@ -189,6 +189,7 @@ select option {
   left: 0;
   bottom: -1px;
   height: 2px;
+  width: 0;
   background: oklch(0.8 0.12 205 / 0.8);
   transition: width 1s linear;
 }
@@ -267,7 +268,11 @@ select option {
   border: 1px solid var(--line);
   border-radius: 12px;
   overflow: hidden;
-  background: radial-gradient(ellipse at center, oklch(0.185 0.028 250) 0%, oklch(0.145 0.015 255) 72%);
+  background: radial-gradient(
+    ellipse at center,
+    oklch(0.185 0.028 250) 0%,
+    oklch(0.145 0.015 255) 72%
+  );
 }
 
 .map__radar {
@@ -362,7 +367,10 @@ select option {
   border: 1px solid transparent;
   padding: 7px 8px;
   border-radius: 7px;
-  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
 }
 
 .team__head {

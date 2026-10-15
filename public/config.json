@@ -5,7 +5,7 @@
   "maxArcs": 40,
   "sources": {
     "board": {
-      "url": "http://localhost:8090"
+      "url": "http://10.67.0.21:8000"
     },
     "scoreboard": {
       "url": "http://10.62.0.120:8000/ctfdata/"

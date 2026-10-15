@@ -116,7 +116,7 @@ function Legend({ view }: { view: BoardView }) {
           <div className="notation__arc">
             <span>{view.attackColors ? "×" : "2"}</span>
           </div>
-          {view.attackColors ? "Атака цветом сервиса, ×N — украдено флагов" : "Атака, число — украдено флагов"}
+          {view.attackColors ? "Атака цветом сервиса, ×N — захвачено флагов" : "Атака, число — захвачено флагов"}
         </li>
         {view.showFirstBloodLegend && (
           <li>

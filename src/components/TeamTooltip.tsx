@@ -18,7 +18,7 @@ export function TeamTooltip({ tip, round }: { tip: TipView; round: number | null
 
       <div className="tip__stats">
         <div className="tip__stat">
-          <div className="tip__stat-label">Украдено флагов</div>
+          <div className="tip__stat-label">Захвачено флагов</div>
           <div className="tip__stat-value" style={{ color: "var(--up)" }}>+{tip.stolen}</div>
           <div className="tip__stat-total">{tip.stolenTotal != null ? `за игру ${tip.stolenTotal}` : roundLabel}</div>
         </div>

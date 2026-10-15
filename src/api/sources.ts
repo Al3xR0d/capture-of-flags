@@ -1,7 +1,12 @@
 import type { BoardConfig, BoardQuery } from "../config";
 import type { Attack, Snapshot } from "../game/types";
 import { createMockScoreboard, createMockShields } from "./mock";
-import { normalizeBoard, normalizeBoardAttacks, normalizeScoreboard, normalizeShields } from "./normalize";
+import {
+  normalizeBoard,
+  normalizeBoardAttacks,
+  normalizeScoreboard,
+  normalizeShields
+} from "./normalize";
 
 /**
  * Подключаемые источники. Каждый резолвится в null / молчит, если ответа нет
@@ -25,10 +30,17 @@ export interface Feed {
 
 type Fetcher<T> = () => Promise<T | null>;
 
-function httpFetcher<T>(url: string, timeoutMs: number, parse: (raw: unknown) => T | null): Fetcher<T> {
+function httpFetcher<T>(
+  url: string,
+  timeoutMs: number,
+  parse: (raw: unknown) => T | null
+): Fetcher<T> {
   return async () => {
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs), cache: "no-store" });
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(timeoutMs),
+        cache: "no-store"
+      });
       if (!res.ok) return null;
       return parse(await res.json());
     } catch (err) {
@@ -67,18 +79,21 @@ function pollingFeed(
   kind: "http" | "mock",
   pollMs: number,
   scoreboard: Fetcher<Snapshot> | null,
-  shields: Fetcher<number[]> | null,
+  shields: Fetcher<number[]> | null
 ): Feed {
   return {
     kind,
     start(h) {
       return every(pollMs, async () => {
-        const [board, sh] = await Promise.all([scoreboard?.() ?? null, shields?.() ?? null]);
+        const [board, sh] = await Promise.all([
+          scoreboard?.() ?? null,
+          shields?.() ?? null
+        ]);
         if (board) h.snapshot(board);
         else h.failed();
         if (board && sh) h.shields(sh);
       });
-    },
+    }
   };
 }
 
@@ -86,8 +101,12 @@ function pollingFeed(
  * Бэкенд борды: SSE /api/stream (`board` — снапшот, `attacks` — пачка атак).
  * EventSource сам переподключается; щиты Wazuh — отдельным опросом.
  */
-function boardFeed(baseUrl: string, pollMs: number, shields: Fetcher<number[]> | null): Feed {
-  const url = `${baseUrl.replace(/\/+$/, "")}/api/stream`;
+function boardFeed(
+  baseUrl: string,
+  pollMs: number,
+  shields: Fetcher<number[]> | null
+): Feed {
+  const url = `${baseUrl.replace(/\/+$/, "")}/events`;
   return {
     kind: "board",
     start(h) {
@@ -101,7 +120,9 @@ function boardFeed(baseUrl: string, pollMs: number, shields: Fetcher<number[]> |
         h.snapshot(snap);
       });
       es.addEventListener("attacks", (e) => {
-        const raw = safeJson((e as MessageEvent<string>).data) as { attacks?: unknown } | null;
+        const raw = safeJson((e as MessageEvent<string>).data) as {
+          attacks?: unknown;
+        } | null;
         const attacks = normalizeBoardAttacks(raw?.attacks, serviceById);
         if (attacks.length) h.attacks(attacks);
       });
@@ -118,7 +139,7 @@ function boardFeed(baseUrl: string, pollMs: number, shields: Fetcher<number[]> |
         es.close();
         stopShields();
       };
-    },
+    }
   };
 }
 
@@ -138,17 +159,21 @@ export function createFeed(cfg: BoardConfig, query: BoardQuery): Feed {
       "mock",
       cfg.pollMs,
       async () => normalizeScoreboard(sb()),
-      async () => normalizeShields(sh()),
+      async () => normalizeShields(sh())
     );
   }
 
   const { board, scoreboard, shields } = cfg.sources;
-  const shieldFetcher = shields.url ? httpFetcher(shields.url, cfg.requestTimeoutMs, normalizeShields) : null;
+  const shieldFetcher = shields.url
+    ? httpFetcher(shields.url, cfg.requestTimeoutMs, normalizeShields)
+    : null;
   if (board.url) return boardFeed(board.url, cfg.pollMs, shieldFetcher);
   return pollingFeed(
     "http",
     cfg.pollMs,
-    scoreboard.url ? httpFetcher(scoreboard.url, cfg.requestTimeoutMs, normalizeScoreboard) : null,
-    shieldFetcher,
+    scoreboard.url
+      ? httpFetcher(scoreboard.url, cfg.requestTimeoutMs, normalizeScoreboard)
+      : null,
+    shieldFetcher
   );
 }

@@ -42,10 +42,12 @@ export const DEFAULT_CONFIG: BoardConfig = {
   requestTimeoutMs: 10_000,
   maxArcs: 40,
   sources: {
-    board: { url: "http://localhost:8090" },
+    board: { url: "http://10.67.0.21:8000/" },
     scoreboard: { url: "http://10.62.0.120:8000/ctfdata/" },
-    shields: { url: "http://gitlabapps.ctflab.local:8080/ctf-backend/api/wazuh/activity" },
-  },
+    shields: {
+      url: "http://gitlabapps.ctflab.local:8080/ctf-backend/api/wazuh/activity"
+    }
+  }
 };
 
 const MOCK_POLL_MS = 20_000;
@@ -63,14 +65,16 @@ export function readQuery(search = window.location.search): BoardQuery {
     myTeam: posInt(q.get("team")),
     mock: q.get("mock") === "1",
     mockTeams: posInt(q.get("teams")) ?? 16,
-    pollMs: posInt(q.get("poll")),
+    pollMs: posInt(q.get("poll"))
   };
 }
 
 export async function loadConfig(query: BoardQuery): Promise<BoardConfig> {
   let file: Partial<BoardConfig> = {};
   try {
-    const res = await fetch(`${import.meta.env.BASE_URL}config.json`, { cache: "no-store" });
+    const res = await fetch(`${import.meta.env.BASE_URL}config.json`, {
+      cache: "no-store"
+    });
     if (res.ok) file = await res.json();
   } catch {
     // нет файла — дефолты
@@ -78,7 +82,7 @@ export async function loadConfig(query: BoardQuery): Promise<BoardConfig> {
   const cfg: BoardConfig = {
     ...DEFAULT_CONFIG,
     ...file,
-    sources: { ...DEFAULT_CONFIG.sources, ...file.sources },
+    sources: { ...DEFAULT_CONFIG.sources, ...file.sources }
   };
   cfg.pollMs = query.pollMs ?? (query.mock ? MOCK_POLL_MS : cfg.pollMs);
   return cfg;

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { createFeed } from "./api/sources";
 import { Header } from "./components/Header";
 import { MapView } from "./components/MapView";
@@ -6,6 +6,8 @@ import { Sidebar } from "./components/Sidebar";
 import type { BoardConfig, BoardQuery } from "./config";
 import { buildView } from "./game/view";
 import { useBoard } from "./hooks/useBoard";
+import { useFirstBlood } from "./first-blood";
+import { setFirstBloodBadgeCallback } from "./firstBloodOverlay";
 
 interface Props {
   config: BoardConfig;
@@ -14,7 +16,40 @@ interface Props {
 
 export default function App({ config, query }: Props) {
   const feed = useMemo(() => createFeed(config, query), [config, query]);
-  const engine = useBoard({ feed, pollMs: config.pollMs, maxArcs: config.maxArcs });
+  const firstBlood = useFirstBlood();
+  const engineRef = useRef<ReturnType<typeof useBoard>>(null);
+
+  const handleFirstBlood = useCallback(
+    (team: string, service: string) => {
+      firstBlood({ team, service, color: "#ffc94d" });
+    },
+    [firstBlood],
+  );
+
+  const onFirstBloodWithOverlay = useMemo(
+    () => (team: string, service: string) => {
+      handleFirstBlood(team, service);
+    },
+    [handleFirstBlood],
+  );
+
+  const engine = useBoard({
+    feed,
+    pollMs: config.pollMs,
+    maxArcs: config.maxArcs,
+    onFirstBlood: onFirstBloodWithOverlay,
+  });
+
+  // Сохраняем ссылку на engine для доступа из callback оверлея
+  engineRef.current = engine;
+
+  // Регистрируем коллбэк для управления бейджем первой крови
+  useEffect(() => {
+    return setFirstBloodBadgeCallback((hide: boolean) => {
+      engine.setHideFirstBloodBadge(hide);
+    });
+  }, [engine]);
+
   const view = buildView(engine, { mode: query.mode, myTeam: query.myTeam });
 
   return (

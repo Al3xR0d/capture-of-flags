@@ -6,11 +6,12 @@ interface Options {
   feed: Feed;
   pollMs: number;
   maxArcs: number;
+  onFirstBlood?: (team: string, service: string) => void;
 }
 
 /** Движок борды, подключённый к фиду данных. */
-export function useBoard({ feed, pollMs, maxArcs }: Options): BoardEngine {
-  const [engine] = useState(() => new BoardEngine({ pollMs, maxArcs }));
+export function useBoard({ feed, pollMs, maxArcs, onFirstBlood }: Options): BoardEngine {
+  const [engine] = useState(() => new BoardEngine({ pollMs, maxArcs, onFirstBlood }));
   useSyncExternalStore(engine.subscribe, engine.getVersion);
 
   useEffect(() => {

@@ -32,6 +32,8 @@ type Listener = () => void;
 export interface EngineOptions {
   pollMs: number;
   maxArcs: number;
+  /** Вызывается при создании дуги первой крови. */
+  onFirstBlood?: (team: string, service: string) => void;
 }
 
 /**
@@ -68,9 +70,13 @@ export class BoardEngine {
   W = 1200;
   H = 800;
   layout: MapLayout = { s: 1, pos: new Map() };
+  /** team id → name, для callback первой крови. */
+  teamNames = new Map<number, string>();
 
   hover: number | null = null;
   teamFilter: number | null = null;
+  /** Скрывать бейдж «FIRST BLOOD» на золотой стрелке, пока активен 3D-оверлей. */
+  hideFirstBloodBadge = false;
 
   private version = 0;
   private listeners = new Set<Listener>();
@@ -142,6 +148,7 @@ export class BoardEngine {
       prev.teams.every((t, i) => t.id === ids[i]);
     this.snapshot = snap;
     this.catalog = serviceCatalog(snap.services);
+    this.teamNames = new Map(snap.teams.map((t) => [t.id, t.name]));
     if (!sameTeams) this.layout = computeLayout(this.W, this.H, ids);
 
     this.connection = "live";
@@ -249,6 +256,11 @@ export class BoardEngine {
     });
     const tone = a.firstBlood ? GOLD : this.toneOf(a);
     this.glow[a.from] = { until: now + 900, color: tone.c, glow: tone.a(0.5) };
+    // Callback при первой крови
+    if (a.firstBlood) {
+      const teamName = this.teamNames.get(a.from) ?? `team-${a.from}`;
+      this.opts.onFirstBlood?.(teamName, a.service ?? "");
+    }
     this.bump(950);
   }
 
@@ -288,6 +300,11 @@ export class BoardEngine {
     this.arcs = this.arcs.filter(
       (a) => id == null || a.from === id || a.to === id
     );
+    this.bump();
+  }
+
+  setHideFirstBloodBadge(hide: boolean) {
+    this.hideFirstBloodBadge = hide;
     this.bump();
   }
 
@@ -556,7 +573,7 @@ export class BoardEngine {
         ctx.fillText(txt, px + 4, s0.y + 0.5);
       }
 
-      if (fb) {
+      if (fb && !this.hideFirstBloodBadge) {
         const m = bz(g, (g.t0 + g.t1) / 2);
         const txt = `FIRST BLOOD${a.service ? ` · ${a.service.toUpperCase()}` : ""}`;
         ctx.font = '700 13px "IBM Plex Mono", monospace';

@@ -9,14 +9,32 @@ import "@fontsource/ibm-plex-mono/600.css";
 import "@fontsource/ibm-plex-mono/700.css";
 import "./styles.css";
 import App from "./App";
+import type { BoardConfig, BoardQuery } from "./config";
 import { loadConfig, readQuery } from "./config";
+import { FirstBloodProvider } from "./first-blood";
+import { callHideFirstBloodBadge } from "./firstBloodOverlay";
 
 const query = readQuery();
 
 void loadConfig(query).then((config) => {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
-      <App config={config} query={query} />
+      <FirstBloodWrapper config={config} query={query} />
     </StrictMode>,
   );
 });
+
+function FirstBloodWrapper({ config, query }: { config: BoardConfig; query: BoardQuery }) {
+  return (
+    <FirstBloodProvider
+      holdMs={5000}
+      volume={0.7}
+      quality="auto"
+      onShow={() => callHideFirstBloodBadge(true)}
+      onClose={() => callHideFirstBloodBadge(false)}
+    >
+      <App config={config} query={query} />
+    </FirstBloodProvider>
+  );
+}
+

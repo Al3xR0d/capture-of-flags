@@ -296,8 +296,6 @@ export interface FirstBloodProviderProps {
   volume?: number;
   /** auto снижает качество на телефонах и слабых CPU */
   quality?: Quality;
-  /** Окно сбора серии, мс: события, пришедшие за это время, показываются вместе */
-  batchMs?: number;
   /** Вызывается когда оверлей показывается */
   onShow?: () => void;
   /** Вызывается когда оверлей полностью скрыт */
@@ -308,14 +306,11 @@ export interface FirstBloodProviderProps {
  * Оборачивает приложение. Анимация вызывается через useFirstBlood()({ team, service, color }).
  * Если события приходят во время показа — они добавляются строками снизу.
  */
-export function FirstBloodProvider({ children, holdMs = 7000, volume = 0.7, quality = 'auto', batchMs = 600, onShow, onClose }: FirstBloodProviderProps) {
+export function FirstBloodProvider({ children, holdMs = 7000, volume = 0.7, quality = 'auto', onShow, onClose }: FirstBloodProviderProps) {
   const [current, setCurrent] = useState<{ id: string; events: QueuedEvent[] } | null>(null);
   const activeRef = useRef(false);
   const closingRef = useRef(false);
   const queueRef = useRef<QueuedEvent[]>([]);
-  const pendingRef = useRef<QueuedEvent[]>([]);
-  const batchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const startShow = useCallback((events: QueuedEvent[]) => {
     activeRef.current = true;
     setCurrent({ id: events[0].key, events });
@@ -328,22 +323,13 @@ export function FirstBloodProvider({ children, holdMs = 7000, volume = 0.7, qual
       return;
     }
     if (activeRef.current) {
-      setCurrent((cur) => (cur ? { ...cur, events: [...cur.events, item] } : cur));
+      // Анимация уже идёт — добавляем в очередь для последующего показа
+      queueRef.current.push(item);
       return;
     }
-    // собираем серию: всё, что пришло за batchMs, показывается вместе
-    pendingRef.current.push(item);
-    if (!batchTimer.current) {
-      batchTimer.current = setTimeout(() => {
-        batchTimer.current = null;
-        const events = pendingRef.current;
-        pendingRef.current = [];
-        startShow(events);
-      }, batchMs);
-    }
-  }, [batchMs, startShow]);
-
-  useEffect(() => () => { if (batchTimer.current) clearTimeout(batchTimer.current); }, []);
+    // Каждая первая кровь — отдельная анимация
+    startShow([item]);
+  }, [startShow]);
 
   // прогрев в простое: подгрузить three.js, создать рендерер, скомпилировать шейдеры, посчитать осколки
   useEffect(() => {
@@ -357,10 +343,10 @@ export function FirstBloodProvider({ children, holdMs = 7000, volume = 0.7, qual
   const handleDone = useCallback(() => {
     closingRef.current = false;
     activeRef.current = false;
-    const queued = queueRef.current;
-    queueRef.current = [];
-    if (queued.length) startShow(queued);
-    else {
+    const queued = queueRef.current.shift();
+    if (queued) {
+      startShow([queued]);
+    } else {
       setCurrent(null);
       onClose?.();
     }

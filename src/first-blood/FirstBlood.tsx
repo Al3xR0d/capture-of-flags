@@ -139,7 +139,7 @@ function Overlay({ events, holdMs, volume, quality, onClosing, onDone }: Overlay
   useEffect(() => {
     const sfx = createSfx({ volume });
     sfxRef.current = sfx;
-    let timers: ReturnType<typeof setTimeout>[] = [];
+    const timers: ReturnType<typeof setTimeout>[] = [];
     const onPhase = (p: Phase) => {
       if (p === 'start') {
         timers.push(...termLines.map(([at], i) => setTimeout(() => {
@@ -314,6 +314,7 @@ export function FirstBloodProvider({ children, holdMs = 7000, volume = 0.7, qual
   const startShow = useCallback((events: QueuedEvent[]) => {
     activeRef.current = true;
     setCurrent({ id: events[0].key, events });
+    onShow?.();
   }, [onShow]);
 
   const trigger = useCallback((ev: FirstBloodEvent) => {

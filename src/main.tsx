@@ -24,7 +24,7 @@ void loadConfig(query).then((config) => {
   );
 });
 
-function FirstBloodWrapper({ config, query }: { config: BoardConfig; query: BoardQuery }) {
+export function FirstBloodWrapper({ config, query }: { config: BoardConfig; query: BoardQuery }) {
   return (
     <FirstBloodProvider
       holdMs={5000}

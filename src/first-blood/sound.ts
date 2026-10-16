@@ -21,6 +21,16 @@ export interface Sfx {
 let ctx: AudioContext | null = null;
 let noiseBuf: AudioBuffer | null = null;
 let impulse: AudioBuffer | null = null;
+let unlocked = false;
+
+/** Разблокировать AudioContext при первом жесте пользователя. */
+function unlockOnGesture() {
+  if (unlocked) return;
+  unlocked = true;
+  if (ctx && ctx.state === 'suspended') {
+    ctx.resume().catch(() => {});
+  }
+}
 
 function getCtx(): AudioContext | null {
   if (!ctx) {
@@ -41,6 +51,14 @@ function getCtx(): AudioContext | null {
   }
   if (ctx.state === 'suspended') ctx.resume().catch(() => {});
   return ctx;
+}
+
+// Глобальный слушатель первого жеста: разблокирует звук до первого появления куба.
+if (typeof window !== 'undefined') {
+  const unlock = () => { unlockOnGesture(); };
+  ['pointerdown', 'mousedown', 'touchstart', 'keydown'].forEach((ev) =>
+    window.addEventListener(ev, unlock, { once: true, passive: true })
+  );
 }
 
 function distCurve(amount: number): Float32Array<ArrayBuffer> {

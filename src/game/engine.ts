@@ -223,7 +223,9 @@ export class BoardEngine {
   private scheduleAttacks(attacks: Attack[]) {
     if (attacks.length === 0) return;
     const snap = this.snapshot;
-    const roundMs = snap?.timing?.roundTime ? snap.timing.roundTime * 1000 : this.opts.pollMs;
+    const roundMs = snap?.timing?.roundTime
+      ? snap.timing.roundTime * 1000
+      : this.opts.pollMs;
     const window = roundMs * 0.95;
     // Сначала золотые стрелки (first blood), потом остальные — перемешиваем для разнообразия
     const fb = attacks.filter((a) => a.firstBlood);
@@ -237,7 +239,11 @@ export class BoardEngine {
     const step = window / (ordered.length - 1 || 1);
     const jitter = Math.random() * Math.min(100, window / ordered.length);
     for (let i = 0; i < ordered.length; i++)
-      this.later(() => this.addArc(ordered[i]), i * step + jitter, this.pending);
+      this.later(
+        () => this.addArc(ordered[i]),
+        i * step + jitter,
+        this.pending
+      );
   }
 
   private addArc(a: Attack) {

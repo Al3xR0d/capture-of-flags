@@ -218,16 +218,19 @@ export class BoardEngine {
     const snap = this.snapshot;
     const roundMs = snap?.timing?.roundTime ? snap.timing.roundTime * 1000 : this.opts.pollMs;
     const window = roundMs * 0.95;
-    // Перемешиваем атаки, чтобы они шли вперемешку от разных команд и сервисов
-    const shuffled = [...attacks];
-    for (let i = shuffled.length - 1; i > 0; i--) {
+    // Сначала золотые стрелки (first blood), потом остальные — перемешиваем для разнообразия
+    const fb = attacks.filter((a) => a.firstBlood);
+    const rest = attacks.filter((a) => !a.firstBlood);
+    const ordered = [...fb];
+    for (let i = rest.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      [rest[i], rest[j]] = [rest[j], rest[i]];
     }
-    const step = window / (shuffled.length - 1 || 1);
-    const jitter = Math.random() * Math.min(100, window / shuffled.length);
-    for (let i = 0; i < shuffled.length; i++)
-      this.later(() => this.addArc(shuffled[i]), i * step + jitter, this.pending);
+    ordered.push(...rest);
+    const step = window / (ordered.length - 1 || 1);
+    const jitter = Math.random() * Math.min(100, window / ordered.length);
+    for (let i = 0; i < ordered.length; i++)
+      this.later(() => this.addArc(ordered[i]), i * step + jitter, this.pending);
   }
 
   private addArc(a: Attack) {
@@ -434,7 +437,15 @@ export class BoardEngine {
     const sc = this.layout.s;
     this.arcs = this.arcs.filter((a) => now - a.born < ARC_LIFE);
 
-    for (const a of this.arcs) {
+    // Золотая стрелка (first blood) для сервиса должна идти раньше обычных.
+    const sorted = [...this.arcs].sort((a, b) => {
+      const aFb = a.firstBlood ? 0 : 1;
+      const bFb = b.firstBlood ? 0 : 1;
+      if (aFb !== bFb) return aFb - bFb;
+      return 0;
+    });
+
+    for (const a of sorted) {
       const g = this.geom(a.from, a.to, a.pull, a.bow);
       if (!g) continue;
       const age = Math.max(0, now - a.born);

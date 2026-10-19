@@ -42,7 +42,11 @@ export interface EngineOptions {
   /** Вызывается при создании дуги первой крови. */
   onFirstBlood?: (team: string, service: string) => void;
   /** Вызывается при клике на бейдж первой крови на карточке команды. */
-  onFirstBloodBadgeClick?: (teamId: number, teamName: string, services: string[]) => void;
+  onFirstBloodBadgeClick?: (
+    teamId: number,
+    teamName: string,
+    services: string[]
+  ) => void;
 }
 
 /**
@@ -365,7 +369,16 @@ export class BoardEngine {
     this.glow[a.from] = { until: now + 900, color: tone.c, glow: tone.a(0.5) };
     if (a.firstBlood && this.canShowFirstBlood(a, round, seenLive)) {
       const teamName = this.teamNames.get(a.from) ?? `team-${a.from}`;
-      this.opts.onFirstBlood?.(teamName, a.service ?? "");
+      const fbEpoch = this.epoch;
+      this.later(
+        () => {
+          if (fbEpoch !== this.epoch) return;
+          if (this.isStaleRound(round)) return;
+          this.opts.onFirstBlood?.(teamName, a.service ?? "");
+        },
+        FB_TRAVEL,
+        this.timeouts
+      );
     }
     this.bump(950);
   }

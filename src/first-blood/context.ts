@@ -10,8 +10,14 @@ export interface FirstBloodEvent {
 }
 
 export type TriggerFirstBlood = (event: FirstBloodEvent) => void;
+export type TriggerFirstBloodBatch = (events: FirstBloodEvent[]) => void;
 
 export const FirstBloodContext = createContext<TriggerFirstBlood>(() => {});
+export const FirstBloodBatchContext = createContext<TriggerFirstBloodBatch | null>(null);
 
 /** Возвращает функцию запуска анимации: firstBlood({ team, service, color }) */
 export const useFirstBlood = (): TriggerFirstBlood => useContext(FirstBloodContext);
+
+/** Возвращает batch-триггер для запуска анимации с несколькими событиями, или null вне провайдера */
+export const useFirstBloodBatch = (): TriggerFirstBloodBatch | null =>
+  useContext(FirstBloodBatchContext);

@@ -40,6 +40,8 @@ export interface CardView extends Avatar {
   score: string | null;
   /** Коды сервисов с первой кровью: «VA SH». */
   fbLetters: string | null;
+  /** Сервисы с первой кровью (для запуска анимации по клику). */
+  fbServices: string[];
 }
 
 export interface Delta {
@@ -182,6 +184,7 @@ export function buildView(engine: BoardEngine, { mode, myTeam }: ViewOptions) {
       svcs: cells(t),
       score: score(t),
       fbLetters: fbLetters(t),
+      fbServices: t.firstBloods ?? [],
     }];
   });
 
@@ -250,6 +253,7 @@ export function buildView(engine: BoardEngine, { mode, myTeam }: ViewOptions) {
     paused: snap?.gameRunning === false,
     teamFilter: tf,
     teamOptions: [...teams].sort((a, b) => a.id - b.id).map((t) => ({ id: t.id, label: t.name })),
+    onFirstBloodBadgeClick: engine.onFirstBloodBadgeClick ?? undefined,
   };
 }
 

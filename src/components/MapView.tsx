@@ -64,6 +64,7 @@ export function MapView({ engine, view }: Props) {
           card={c}
           onEnter={interactive ? onEnter : undefined}
           onLeave={interactive ? onLeave : undefined}
+          onFirstBloodBadgeClick={interactive ? () => view.onFirstBloodBadgeClick?.(c.id, c.name, c.fbServices) : undefined}
         />
       ))}
 

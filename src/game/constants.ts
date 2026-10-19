@@ -5,7 +5,7 @@ export interface Tone {
 
 const mk = (l: number, c: number, h: number): Tone => ({
   c: `oklch(${l} ${c} ${h})`,
-  a: (x) => `oklch(${l} ${c} ${h} / ${x})`,
+  a: (x) => `oklch(${l} ${c} ${h} / ${x})`
 });
 
 export interface StatusInfo extends Tone {
@@ -20,13 +20,17 @@ export const STATUS: Record<number, StatusInfo> = {
   102: { label: "CORRUPT", short: "CORRUPT", ...mk(0.73, 0.17, 55) },
   103: { label: "MUMBLE", short: "MUMBLE", ...mk(0.86, 0.16, 95) },
   104: { label: "DOWN", short: "DOWN", ...mk(0.66, 0.21, 25) },
-  110: { label: "CHECK FAILED", short: "CHK FAIL", ...mk(0.62, 0.015, 250) },
+  110: { label: "CHECK FAILED", short: "CHK FAIL", ...mk(0.62, 0.015, 250) }
 };
 
 export const STATUS_ORDER = [101, 104, 103, 102, 110];
 
 /** Неизвестный / не пришедший статус. */
-export const UNKNOWN_STATUS: StatusInfo = { label: "НЕТ ДАННЫХ", short: "—", ...mk(0.5, 0.02, 255) };
+export const UNKNOWN_STATUS: StatusInfo = {
+  label: "НЕТ ДАННЫХ",
+  short: "—",
+  ...mk(0.5, 0.02, 255)
+};
 
 export const RED = STATUS[104];
 export const GOLD = mk(0.85, 0.15, 82);
@@ -45,7 +49,7 @@ const KNOWN_SERVICES: Record<string, { l: string; tone: Tone }> = {
   BioForge: { l: "BF", tone: mk(0.72, 0.15, 258) },
   SmartHome: { l: "SH", tone: mk(0.72, 0.17, 300) },
   SleepCaps: { l: "SC", tone: mk(0.75, 0.17, 342) },
-  SKUDS: { l: "SK", tone: mk(0.8, 0.12, 178) },
+  SKUDS: { l: "SK", tone: mk(0.8, 0.12, 178) }
 };
 
 /**
@@ -62,16 +66,29 @@ function codeCandidates(name: string): string[] {
 }
 
 /** Цвета для сервисов, которых нет в KNOWN_SERVICES. */
-const SPARE_TONES = [mk(0.92, 0.03, 250), mk(0.78, 0.14, 130), mk(0.76, 0.13, 25), mk(0.8, 0.1, 230)];
+const SPARE_TONES = [
+  mk(0.92, 0.03, 250),
+  mk(0.78, 0.14, 130),
+  mk(0.76, 0.13, 25),
+  mk(0.8, 0.1, 230),
+  mk(0.82, 0.11, 340),
+  mk(0.84, 0.09, 180),
+  mk(0.88, 0.06, 20),
+  mk(0.77, 0.14, 160)
+];
 
 /** Код и цвет каждого сервиса; неизвестным — первый свободный код и свободный цвет. */
-export function serviceCatalog(services: string[]): Record<string, ServiceInfo> {
+export function serviceCatalog(
+  services: string[]
+): Record<string, ServiceInfo> {
   const usedL = new Set<string>();
   const res: Record<string, ServiceInfo> = {};
   let spare = 0;
   for (const name of services) {
     const known = KNOWN_SERVICES[name];
-    const candidates = [known?.l, ...codeCandidates(name)].filter(Boolean) as string[];
+    const candidates = [known?.l, ...codeCandidates(name)].filter(
+      Boolean
+    ) as string[];
     const l = candidates.find((c) => !usedL.has(c)) ?? `S${usedL.size + 1}`;
     usedL.add(l);
     const tone = known?.tone ?? SPARE_TONES[spare++ % SPARE_TONES.length];

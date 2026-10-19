@@ -6,7 +6,7 @@ import { Sidebar } from "./components/Sidebar";
 import type { BoardConfig, BoardQuery } from "./config";
 import { buildView } from "./game/view";
 import { useBoard } from "./hooks/useBoard";
-import { useFirstBlood } from "./first-blood";
+import { useFirstBlood, useFirstBloodBatch } from "./first-blood";
 import { setFirstBloodBadgeCallback } from "./firstBloodOverlay";
 
 interface Props {
@@ -17,6 +17,7 @@ interface Props {
 export default function App({ config, query }: Props) {
   const feed = useMemo(() => createFeed(config, query), [config, query]);
   const firstBlood = useFirstBlood();
+  const firstBloodBatch = useFirstBloodBatch();
   const engineRef = useRef<ReturnType<typeof useBoard>>(null);
 
   const handleFirstBlood = useCallback(
@@ -33,11 +34,21 @@ export default function App({ config, query }: Props) {
     [handleFirstBlood],
   );
 
+  // Обработка клика на бейдж первой крови — запускает анимацию со всеми сервисами
+  const onFirstBloodBadgeClick = useMemo(
+    () => (_teamId: number, teamName: string, services: string[]) => {
+      if (!firstBloodBatch || !services.length) return;
+      firstBloodBatch(services.map((service) => ({ team: teamName, service, color: "#ffc94d" })));
+    },
+    [firstBloodBatch],
+  );
+
   const engine = useBoard({
     feed,
     pollMs: config.pollMs,
     maxArcs: config.maxArcs,
     onFirstBlood: onFirstBloodWithOverlay,
+    onFirstBloodBadgeClick,
   });
 
   // Сохраняем ссылку на engine для доступа из callback оверлея

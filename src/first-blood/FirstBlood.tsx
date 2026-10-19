@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { FirstBloodContext, type FirstBloodEvent } from './context';
+import { FirstBloodContext, FirstBloodBatchContext, type FirstBloodEvent, type TriggerFirstBloodBatch } from './context';
 // three.js и сцена грузятся лениво (отдельный чанк), оверлею нужен только таймлайн
 import type { FrameInfo, Phase, Quality } from './scene';
 import { T } from './timeline';
@@ -332,6 +332,21 @@ export function FirstBloodProvider({ children, holdMs = 7000, volume = 0.7, qual
     startShow([item]);
   }, [startShow]);
 
+  // Batch-триггер: запускает анимацию сразу со списком событий
+  const batchTrigger = useCallback<TriggerFirstBloodBatch>((events) => {
+    const items = events.map(normalize);
+    if (!items.length) return;
+    if (closingRef.current) {
+      queueRef.current.push(...items);
+      return;
+    }
+    if (activeRef.current) {
+      queueRef.current.push(...items);
+      return;
+    }
+    startShow(items);
+  }, [startShow]);
+
   // прогрев в простое: подгрузить three.js, создать рендерер, скомпилировать шейдеры, посчитать осколки
   useEffect(() => {
     const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
@@ -372,19 +387,23 @@ export function FirstBloodProvider({ children, holdMs = 7000, volume = 0.7, qual
 
   return (
     <FirstBloodContext.Provider value={trigger}>
-      {children}
-      {current && createPortal(
-        <Overlay
-          key={current.id}
-          events={current.events}
-          holdMs={holdMs}
-          volume={volume}
-          quality={quality}
-          onClosing={handleClosing}
-          onDone={handleDone}
-        />,
-        document.body,
-      )}
+      <FirstBloodBatchContext.Provider value={batchTrigger}>
+        {children}
+        {current && createPortal(
+          <Overlay
+            key={current.id}
+            events={current.events}
+            holdMs={holdMs}
+            volume={volume}
+            quality={quality}
+            onClosing={handleClosing}
+            onDone={handleDone}
+          />,
+          document.body,
+        )}
+      </FirstBloodBatchContext.Provider>
     </FirstBloodContext.Provider>
   );
 }
+
+export { Overlay };

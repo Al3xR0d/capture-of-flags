@@ -6,9 +6,11 @@ interface Props {
   /** Нет в режиме экрана. */
   onEnter?: (id: number) => void;
   onLeave?: (id: number) => void;
+  /** Клик по бейджу первой крови — запускает 3D-анимацию. */
+  onFirstBloodBadgeClick?: (teamId: number) => void;
 }
 
-export function TeamCard({ card: t, onEnter, onLeave }: Props) {
+export function TeamCard({ card: t, onEnter, onLeave, onFirstBloodBadgeClick }: Props) {
   return (
     <div
       className="team"
@@ -66,7 +68,19 @@ export function TeamCard({ card: t, onEnter, onLeave }: Props) {
         )}
 
         {t.mine && <div className="team__tag">ВЫ</div>}
-        {t.fbLetters && <div className="team__tag team__tag--fb">1ST BLOOD · {t.fbLetters}</div>}
+        {t.fbLetters && (
+          <div
+            className="team__tag team__tag--fb"
+            onClick={(e) => {
+              e.stopPropagation();
+              onFirstBloodBadgeClick?.(t.id);
+            }}
+            style={{ cursor: "pointer" }}
+            title={`Первая кровь: ${t.fbServices.join(", ")}`}
+          >
+            1ST BLOOD · {t.fbLetters}
+          </div>
+        )}
       </div>
     </div>
   );

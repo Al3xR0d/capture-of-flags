@@ -7,11 +7,12 @@ interface Options {
   pollMs: number;
   maxArcs: number;
   onFirstBlood?: (team: string, service: string) => void;
+  onFirstBloodBadgeClick?: (teamId: number, teamName: string, services: string[]) => void;
 }
 
 /** Движок борды, подключённый к фиду данных. */
-export function useBoard({ feed, pollMs, maxArcs, onFirstBlood }: Options): BoardEngine {
-  const [engine] = useState(() => new BoardEngine({ pollMs, maxArcs, onFirstBlood }));
+export function useBoard({ feed, pollMs, maxArcs, onFirstBlood, onFirstBloodBadgeClick }: Options): BoardEngine {
+  const [engine] = useState(() => new BoardEngine({ pollMs, maxArcs, onFirstBlood, onFirstBloodBadgeClick }));
   useSyncExternalStore(engine.subscribe, engine.getVersion);
 
   useEffect(() => {

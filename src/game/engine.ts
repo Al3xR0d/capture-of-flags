@@ -41,6 +41,8 @@ export interface EngineOptions {
   maxArcs: number;
   /** Вызывается при создании дуги первой крови. */
   onFirstBlood?: (team: string, service: string) => void;
+  /** Вызывается при клике на бейдж первой крови на карточке команды. */
+  onFirstBloodBadgeClick?: (teamId: number, teamName: string, services: string[]) => void;
 }
 
 /**
@@ -79,6 +81,10 @@ export class BoardEngine {
   layout: MapLayout = { s: 1, pos: new Map() };
   /** team id → name, для callback первой крови. */
   teamNames = new Map<number, string>();
+  /** team id → список сервисов с первой кровью. */
+  firstBloodServices = new Map<number, string[]>();
+  /** Callback для клика по бейджу первой крови. */
+  onFirstBloodBadgeClick: EngineOptions["onFirstBloodBadgeClick"];
 
   hover: number | null = null;
   teamFilter: number | null = null;
@@ -107,6 +113,7 @@ export class BoardEngine {
 
   constructor(opts: EngineOptions) {
     this.opts = opts;
+    this.onFirstBloodBadgeClick = opts.onFirstBloodBadgeClick ?? undefined;
   }
 
   // ── store ──────────────────────────────────────────────────────────────
@@ -180,6 +187,7 @@ export class BoardEngine {
     this.flash = {};
     this.glow = {};
     this.shownFirstBloods.clear();
+    this.firstBloodServices.clear();
   }
 
   /**
@@ -221,6 +229,11 @@ export class BoardEngine {
     this.snapshot = snap;
     this.catalog = serviceCatalog(snap.services);
     this.teamNames = new Map(snap.teams.map((t) => [t.id, t.name]));
+    this.firstBloodServices = new Map(
+      snap.teams
+        .filter((t) => t.firstBloods?.length)
+        .map((t) => [t.id, t.firstBloods!])
+    );
     if (!sameTeams) this.layout = computeLayout(this.W, this.H, ids);
 
     this.connection = "live";
@@ -424,6 +437,14 @@ export class BoardEngine {
   setHideFirstBloodBadge(hide: boolean) {
     this.hideFirstBloodBadge = hide;
     this.bump();
+  }
+
+  /** Запуск 3D-анимации первой крови по клику на бейдж. */
+  triggerFirstBloodOverlay(teamId: number) {
+    const name = this.teamNames.get(teamId);
+    const services = this.firstBloodServices.get(teamId);
+    if (!name || !services?.length) return;
+    this.opts.onFirstBloodBadgeClick?.(teamId, name, services);
   }
 
   // ── производные ────────────────────────────────────────────────────────

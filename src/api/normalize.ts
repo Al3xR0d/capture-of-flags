@@ -171,7 +171,10 @@ export function normalizeBoardAttacks(
       to,
       flags,
       service: serviceById[a.serviceId],
-      firstBlood: a.firstBlood === true
+      firstBlood: a.firstBlood === true,
+      // Раунд атаки: по нему борда отсекает атаки, пришедшие задним числом
+      // (вкладка была в фоне, поток отдал накопившиеся пачки).
+      round: num(a.round) ?? undefined
     });
   }
   return out;

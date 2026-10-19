@@ -29,6 +29,13 @@ import { bz, type Bezier } from "./utils";
 
 type Listener = () => void;
 
+/**
+ * Допуск «просрочки» атаки в раундах. Атака в самом конце раунда приходит уже
+ * после снапшота следующего, поэтому отбрасываем только те, что отстали
+ * больше чем на этот запас.
+ */
+const STALE_ROUNDS = 1;
+
 export interface EngineOptions {
   pollMs: number;
   maxArcs: number;
@@ -81,13 +88,22 @@ export class BoardEngine {
   private version = 0;
   private listeners = new Set<Listener>();
   private slot = 0;
-  /** Раунд, атаки которого уже показаны. */
-  private spawnedRound: number | null | undefined = undefined;
+  /** Раунды, атаки которых уже показаны. */
+  private spawnedRounds = new Set<number | null>();
+  /** Ключи первых кровей, уже показанных оверлеем в текущем раунде. */
+  private shownFirstBloods = new Set<string>();
   private shieldedRound: number | null | undefined = undefined;
   private shielded = new Set<number>();
   /** Отложенные появления дуг/щитов текущего раунда. */
   private pending = new Set<number>();
   private timeouts = new Set<number>();
+  /**
+   * Эпоха наблюдения. Растёт при смене раунда и при уходе вкладки в фон:
+   * всё, что было запланировано до этого, показывать уже нельзя.
+   */
+  private epoch = 0;
+  /** Вкладка видима: 3D-первую кровь показываем только для данных, увиденных вживую. */
+  private watching = true;
 
   constructor(opts: EngineOptions) {
     this.opts = opts;
@@ -117,6 +133,67 @@ export class BoardEngine {
     bucket.add(id);
   }
 
+  /** Раунд, который борда показывает сейчас. */
+  private currentRound(): number | null {
+    return this.snapshot?.round ?? null;
+  }
+
+  /**
+   * Атака заведомо проехавшего раунда. Допуск в один раунд — атака в конце
+   * раунда приходит уже после снапшота следующего, и терять её нельзя.
+   */
+  private isStaleRound(round: number | null): boolean {
+    const cur = this.currentRound();
+    return round != null && cur != null && round < cur - STALE_ROUNDS;
+  }
+
+  /**
+   * Планирует появление анимации, привязанной к раунду `round`. Колбэк
+   * выполняется, только если раунд не проехал и с момента планирования не
+   * сменился раунд (эпоха). Так дуги не «догоняют» пользователя в следующих
+   * раундах.
+   */
+  private scheduleInRound(round: number | null, fn: () => void, ms: number) {
+    const epoch = this.epoch;
+    this.later(
+      () => {
+        if (epoch !== this.epoch) return;
+        if (this.isStaleRound(round)) return;
+        fn();
+      },
+      ms,
+      this.pending
+    );
+  }
+
+  /**
+   * Смена раунда: отменяем всё запланированное и забываем подсветки, чтобы
+   * анимации прошлого раунда не проигрывались в новом.
+   */
+  private resetRound() {
+    this.epoch++;
+    for (const id of this.pending) clearTimeout(id);
+    this.pending.clear();
+    this.arcs = [];
+    this.shields = [];
+    this.shielded.clear();
+    this.flash = {};
+    this.glow = {};
+    this.shownFirstBloods.clear();
+  }
+
+  /**
+   * Вкладка стала видимой/скрытой. Видимость влияет только на 3D-первую кровь
+   * (см. canShowFirstBlood): дуги атак — это фон борды, они продолжают
+   * показываться и после возвращения. Поэтому запланированное здесь не
+   * отменяем: иначе раунд, размеченный снапшотом, остался бы без дуг.
+   */
+  setWatching(watching: boolean) {
+    if (this.watching === watching) return;
+    this.watching = watching;
+    this.bump();
+  }
+
   dispose() {
     for (const id of [...this.pending, ...this.timeouts]) clearTimeout(id);
     this.pending.clear();
@@ -132,13 +209,8 @@ export class BoardEngine {
       this.prevPlaces = Object.fromEntries(
         prev.teams.map((t) => [t.id, t.place])
       );
-      this.arcs = [];
-      for (const id of this.pending) clearTimeout(id);
-      this.pending.clear();
-      this.shields = [];
-      this.shielded.clear();
-      this.flash = {};
-      this.glow = {};
+      this.resetRound();
+      this.spawnedRounds.clear();
     }
 
     const ids = snap.teams.map((t) => t.id);
@@ -154,11 +226,10 @@ export class BoardEngine {
     this.connection = "live";
     this.lastUpdate = Date.now();
 
-    if (
-      !snap.liveAttacks &&
-      (snap.round == null || snap.round !== this.spawnedRound)
-    ) {
-      this.spawnedRound = snap.round;
+    if (!snap.liveAttacks && !this.spawnedRounds.has(snap.round)) {
+      this.spawnedRounds.add(snap.round);
+      // Атаки снапшота: дуги рисуем всегда, а 3D-первую кровь — если атака
+      // помечена раундом, который борда показывает сейчас (см. canShowFirstBlood).
       this.scheduleAttacks(snap.attacks);
     }
     this.bump();
@@ -171,6 +242,10 @@ export class BoardEngine {
   applyLiveAttacks(attacks: Attack[]) {
     const snap = this.snapshot;
     if (!snap) return;
+    const round = this.currentRound();
+    // Видела ли борда эту пачку: данные, пришедшие в скрытую вкладку, не
+    // должны запускать 3D-анимацию, даже если таймеры «выстрелят» позже.
+    const seenLive = this.watching;
     const merged = [...snap.attacks];
     for (const a of attacks) {
       const cur = merged.find(
@@ -187,9 +262,15 @@ export class BoardEngine {
     }
     this.snapshot = { ...snap, attacks: merged };
     const step = attacks.length > 1 ? LIVE_STAGGER / (attacks.length - 1) : 0;
-    attacks.forEach((a, i) =>
-      this.later(() => this.addArc(a), i * step, this.timeouts)
-    );
+    attacks.forEach((a, i) => {
+      // Раунд атаки с бэкенда; если его нет — раунд, в котором её получили.
+      const attackRound = a.round ?? round;
+      this.scheduleInRound(
+        attackRound,
+        () => this.addArc(a, attackRound, seenLive),
+        i * step
+      );
+    });
     this.bump();
   }
 
@@ -222,6 +303,10 @@ export class BoardEngine {
 
   private scheduleAttacks(attacks: Attack[]) {
     if (attacks.length === 0) return;
+    const round = this.currentRound();
+    // Видела ли борда этот снапшот: данные, пришедшие в скрытую вкладку, не
+    // должны запускать 3D-первую кровь.
+    const seenLive = this.watching;
     const snap = this.snapshot;
     const roundMs = snap?.timing?.roundTime
       ? snap.timing.roundTime * 1000
@@ -238,15 +323,18 @@ export class BoardEngine {
     ordered.push(...rest);
     const step = window / (ordered.length - 1 || 1);
     const jitter = Math.random() * Math.min(100, window / ordered.length);
-    for (let i = 0; i < ordered.length; i++)
-      this.later(
-        () => this.addArc(ordered[i]),
-        i * step + jitter,
-        this.pending
+    for (let i = 0; i < ordered.length; i++) {
+      const a = ordered[i];
+      const attackRound = a.round ?? round;
+      this.scheduleInRound(
+        attackRound,
+        () => this.addArc(a, attackRound, seenLive),
+        i * step + jitter
       );
+    }
   }
 
-  private addArc(a: Attack) {
+  private addArc(a: Attack, round: number | null, seenLive: boolean) {
     const pos = this.layout.pos;
     if (!pos.has(a.from) || !pos.has(a.to)) return;
     const tf = this.teamFilter;
@@ -262,12 +350,36 @@ export class BoardEngine {
     });
     const tone = a.firstBlood ? GOLD : this.toneOf(a);
     this.glow[a.from] = { until: now + 900, color: tone.c, glow: tone.a(0.5) };
-    // Callback при первой крови
-    if (a.firstBlood) {
+    if (a.firstBlood && this.canShowFirstBlood(a, round, seenLive)) {
       const teamName = this.teamNames.get(a.from) ?? `team-${a.from}`;
       this.opts.onFirstBlood?.(teamName, a.service ?? "");
     }
     this.bump(950);
+  }
+
+  /**
+   * Запускать ли 3D-первую кровь. Условия: данные пришли на видимую борду
+   * (`seenLive`), борда видима и сейчас, и атака относится к раунду, который
+   * она показывает (`isStaleRound` пропускает только проехавшие раунды с
+   * запасом в один — атака конца раунда приходит уже после снапшота
+   * следующего). Дуги при этом рисуются всегда, независимо от видимости.
+   */
+  private canShowFirstBlood(
+    a: Attack,
+    round: number | null,
+    seenLive: boolean
+  ): boolean {
+    if (!seenLive || !this.watching || this.isStaleRound(a.round ?? round))
+      return false;
+    return this.claimFirstBlood(a, a.round ?? round);
+  }
+
+  /** Первая кровь этого раунда ещё не показывалась оверлеем? */
+  private claimFirstBlood(a: Attack, round: number | null): boolean {
+    const key = `${round}|${a.from}-${a.to}-${a.service ?? ""}`;
+    if (this.shownFirstBloods.has(key)) return false;
+    this.shownFirstBloods.add(key);
+    return true;
   }
 
   private addShield(team: number) {

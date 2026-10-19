@@ -353,6 +353,23 @@ export function FirstBloodProvider({ children, holdMs = 7000, volume = 0.7, qual
     }
   }, [startShow, onClose]);
 
+  // Уход с борды: показ в скрытой вкладке никто не видит, а к возвращению он
+  // «догонит» пользователя уже в другом раунде. Поэтому очередь чистим, а
+  // текущий показ снимаем.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (!document.hidden) return;
+      queueRef.current = [];
+      if (!activeRef.current) return;
+      closingRef.current = false;
+      activeRef.current = false;
+      setCurrent(null);
+      onClose?.();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [onClose]);
+
   return (
     <FirstBloodContext.Provider value={trigger}>
       {children}

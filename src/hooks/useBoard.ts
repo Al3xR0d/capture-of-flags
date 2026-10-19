@@ -27,5 +27,15 @@ export function useBoard({ feed, pollMs, maxArcs, onFirstBlood }: Options): Boar
     };
   }, [engine, feed]);
 
+  // Видимость вкладки нужна движку, чтобы не запускать 3D-первую кровь по
+  // данным, пришедшим в фон (и не показывать её сразу после возвращения).
+  // Дуги атак от видимости не зависят.
+  useEffect(() => {
+    const sync = () => engine.setWatching(!document.hidden);
+    document.addEventListener("visibilitychange", sync);
+    sync();
+    return () => document.removeEventListener("visibilitychange", sync);
+  }, [engine]);
+
   return engine;
 }

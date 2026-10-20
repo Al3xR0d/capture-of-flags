@@ -8,9 +8,10 @@ import { TeamTooltip } from "./TeamTooltip";
 interface Props {
   engine: BoardEngine;
   view: BoardView;
+  onShowSidebar?: () => void;
 }
 
-export function MapView({ engine, view }: Props) {
+export function MapView({ engine, view, onShowSidebar }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -43,6 +44,20 @@ export function MapView({ engine, view }: Props) {
 
   return (
     <div ref={mapRef} className="map">
+      {onShowSidebar && (
+        <button
+          type="button"
+          className="map__toggle"
+          onClick={() => onShowSidebar()}
+          aria-label="Показать сайдбар"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <rect x="2" y="4" width="16" height="2" rx="1" fill="currentColor" />
+            <rect x="2" y="9" width="16" height="2" rx="1" fill="currentColor" />
+            <rect x="2" y="14" width="16" height="2" rx="1" fill="currentColor" />
+          </svg>
+        </button>
+      )}
       <div className="map__radar" aria-hidden>
         <Radar
           color="#00ff9d"

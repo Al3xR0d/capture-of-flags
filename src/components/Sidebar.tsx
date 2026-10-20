@@ -6,11 +6,24 @@ import { Avatar } from "./Avatar";
 interface Props {
   engine: BoardEngine;
   view: BoardView;
+  onClose?: () => void;
 }
 
-export function Sidebar({ engine, view }: Props) {
+export function Sidebar({ engine, view, onClose }: Props) {
   return (
     <aside className="sidebar">
+      {onClose && (
+        <button
+          type="button"
+          className="sidebar__close"
+          onClick={() => onClose()}
+          aria-label="Закрыть сайдбар"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M5 5L15 15M15 5L5 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
+      )}
       {view.top.length > 0 && <Ranking view={view} />}
       {view.mode === "interactive" && view.teamOptions.length > 0 && <Filters engine={engine} view={view} />}
       <Legend view={view} />

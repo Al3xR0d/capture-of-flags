@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFeed } from "./api/sources";
 import { Header } from "./components/Header";
 import { MapView } from "./components/MapView";
@@ -19,6 +19,7 @@ export default function App({ config, query }: Props) {
   const firstBlood = useFirstBlood();
   const firstBloodBatch = useFirstBloodBatch();
   const engineRef = useRef<ReturnType<typeof useBoard>>(null);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
 
   const handleFirstBlood = useCallback(
     (team: string, service: string) => {
@@ -66,9 +67,17 @@ export default function App({ config, query }: Props) {
   return (
     <div className={`app app--${query.mode}`}>
       <Header title={config.title} view={view} mock={query.mock} />
-      <main className="layout">
-        <MapView engine={engine} view={view} />
-        <Sidebar engine={engine} view={view} />
+      <main className={`layout${isSidebarVisible ? " layout--sidebar" : ""}`}>
+        <MapView
+          engine={engine}
+          view={view}
+          onShowSidebar={() => setIsSidebarVisible(true)}
+        />
+        <Sidebar
+          engine={engine}
+          view={view}
+          onClose={() => setIsSidebarVisible(false)}
+        />
       </main>
     </div>
   );

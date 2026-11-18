@@ -11,7 +11,6 @@ import {
   RED,
   SHIELD,
   SHIELD_LIFE,
-  SPREAD,
   serviceCatalog,
   type ServiceInfo,
   type Tone
@@ -29,19 +28,12 @@ import { bz, type Bezier } from "./utils";
 
 type Listener = () => void;
 
-/**
- * Допуск «просрочки» атаки в раундах. Атака в самом конце раунда приходит уже
- * после снапшота следующего, поэтому отбрасываем только те, что отстали
- * больше чем на этот запас.
- */
 const STALE_ROUNDS = 1;
 
 export interface EngineOptions {
   pollMs: number;
   maxArcs: number;
-  /** Вызывается при создании дуги первой крови. */
   onFirstBlood?: (team: string, service: string) => void;
-  /** Вызывается при клике на бейдж первой крови на карточке команды. */
   onFirstBloodBadgeClick?: (
     teamId: number,
     teamName: string,
@@ -49,78 +41,49 @@ export interface EngineOptions {
   ) => void;
 }
 
-/**
- * Состояние борды. Не зависит от React: React подписывается через
- * `subscribe` / `getVersion` (useSyncExternalStore), канвас рисуется вызовом
- * `draw` из rAF.
- *
- * Каждый ответ API — снапшот раунда. Для старого API атаки снапшота
- * раскидываются дугами по окну опроса; у бэкенда борды атаки приходят
- * потоком (applyLiveAttacks). Команды с сработавшей защитой (Wazuh) получают
- * по одному пульсу щита за раунд.
- */
 export class BoardEngine {
   readonly opts: EngineOptions;
 
   snapshot: Snapshot | null = null;
-  /** Места команд в предыдущем раунде — для ↑/↓. */
   prevPlaces: Record<number, number> = {};
   connection: ConnectionState = "waiting";
-  /** Date.now() последнего успешного ответа. */
   lastUpdate: number | null = null;
-  /** Источник щитов ответил хотя бы раз — показываем легенду щитов. */
   shieldsSeen = false;
 
   arcs: Arc[] = [];
   shields: ShieldPulse[] = [];
-  /** team id → до какого момента подсвечена как жертва. */
   flash: Record<number, number> = {};
-  /** team id → подсветка атакующей цветом сервиса. */
   glow: Record<number, { until: number; color: string; glow: string }> = {};
-  /** Буква и цвет каждого сервиса текущего снапшота. */
   catalog: Record<string, ServiceInfo> = {};
 
   W = 1200;
   H = 800;
   layout: MapLayout = { s: 1, pos: new Map() };
-  /** team id → name, для callback первой крови. */
   teamNames = new Map<number, string>();
-  /** team id → список сервисов с первой кровью. */
   firstBloodServices = new Map<number, string[]>();
-  /** Callback для клика по бейджу первой крови. */
   onFirstBloodBadgeClick: EngineOptions["onFirstBloodBadgeClick"];
 
   hover: number | null = null;
   teamFilter: number | null = null;
-  /** Скрывать бейдж «FIRST BLOOD» на золотой стрелке, пока активен 3D-оверлей. */
   hideFirstBloodBadge = false;
 
   private version = 0;
   private listeners = new Set<Listener>();
   private slot = 0;
-  /** Раунды, атаки которых уже показаны. */
   private spawnedRounds = new Set<number | null>();
-  /** Ключи первых кровей, уже показанных оверлеем в текущем раунде. */
   private shownFirstBloods = new Set<string>();
   private shieldedRound: number | null | undefined = undefined;
   private shielded = new Set<number>();
-  /** Отложенные появления дуг/щитов текущего раунда. */
   private pending = new Set<number>();
+  private shieldTimeouts = new Set<number>();
   private timeouts = new Set<number>();
-  /**
-   * Эпоха наблюдения. Растёт при смене раунда и при уходе вкладки в фон:
-   * всё, что было запланировано до этого, показывать уже нельзя.
-   */
   private epoch = 0;
-  /** Вкладка видима: 3D-первую кровь показываем только для данных, увиденных вживую. */
   private watching = true;
 
   constructor(opts: EngineOptions) {
     this.opts = opts;
     this.onFirstBloodBadgeClick = opts.onFirstBloodBadgeClick ?? undefined;
   }
-
-  // ── store ──────────────────────────────────────────────────────────────
 
   subscribe = (l: Listener): (() => void) => {
     this.listeners.add(l);
@@ -129,7 +92,6 @@ export class BoardEngine {
 
   getVersion = (): number => this.version;
 
-  /** Уведомить сейчас и ещё раз через `ms`, чтобы истекли подсветки. */
   private bump(ms?: number) {
     this.version++;
     this.listeners.forEach((l) => l());
@@ -144,26 +106,15 @@ export class BoardEngine {
     bucket.add(id);
   }
 
-  /** Раунд, который борда показывает сейчас. */
   private currentRound(): number | null {
     return this.snapshot?.round ?? null;
   }
 
-  /**
-   * Атака заведомо проехавшего раунда. Допуск в один раунд — атака в конце
-   * раунда приходит уже после снапшота следующего, и терять её нельзя.
-   */
   private isStaleRound(round: number | null): boolean {
     const cur = this.currentRound();
     return round != null && cur != null && round < cur - STALE_ROUNDS;
   }
 
-  /**
-   * Планирует появление анимации, привязанной к раунду `round`. Колбэк
-   * выполняется, только если раунд не проехал и с момента планирования не
-   * сменился раунд (эпоха). Так дуги не «догоняют» пользователя в следующих
-   * раундах.
-   */
   private scheduleInRound(round: number | null, fn: () => void, ms: number) {
     const epoch = this.epoch;
     this.later(
@@ -177,10 +128,6 @@ export class BoardEngine {
     );
   }
 
-  /**
-   * Смена раунда: отменяем всё запланированное и забываем подсветки, чтобы
-   * анимации прошлого раунда не проигрывались в новом.
-   */
   private resetRound() {
     this.epoch++;
     for (const id of this.pending) clearTimeout(id);
@@ -188,18 +135,13 @@ export class BoardEngine {
     this.arcs = [];
     this.shields = [];
     this.shielded.clear();
+    this.shieldedRound = null;
     this.flash = {};
     this.glow = {};
     this.shownFirstBloods.clear();
     this.firstBloodServices.clear();
   }
 
-  /**
-   * Вкладка стала видимой/скрытой. Видимость влияет только на 3D-первую кровь
-   * (см. canShowFirstBlood): дуги атак — это фон борды, они продолжают
-   * показываться и после возвращения. Поэтому запланированное здесь не
-   * отменяем: иначе раунд, размеченный снапшотом, остался бы без дуг.
-   */
   setWatching(watching: boolean) {
     if (this.watching === watching) return;
     this.watching = watching;
@@ -207,12 +149,16 @@ export class BoardEngine {
   }
 
   dispose() {
-    for (const id of [...this.pending, ...this.timeouts]) clearTimeout(id);
+    for (const id of [
+      ...this.pending,
+      ...this.shieldTimeouts,
+      ...this.timeouts
+    ])
+      clearTimeout(id);
     this.pending.clear();
+    this.shieldTimeouts.clear();
     this.timeouts.clear();
   }
-
-  // ── данные ─────────────────────────────────────────────────────────────
 
   applySnapshot(snap: Snapshot) {
     const prev = this.snapshot;
@@ -245,23 +191,15 @@ export class BoardEngine {
 
     if (!snap.liveAttacks && !this.spawnedRounds.has(snap.round)) {
       this.spawnedRounds.add(snap.round);
-      // Атаки снапшота: дуги рисуем всегда, а 3D-первую кровь — если атака
-      // помечена раундом, который борда показывает сейчас (см. canShowFirstBlood).
       this.scheduleAttacks(snap.attacks);
     }
     this.bump();
   }
 
-  /**
-   * Пачка атак из потока: дуги разносятся по LIVE_STAGGER, сами атаки
-   * докладываются в атаки раунда (hover, подсказка) до следующего снапшота.
-   */
   applyLiveAttacks(attacks: Attack[]) {
     const snap = this.snapshot;
     if (!snap) return;
     const round = this.currentRound();
-    // Видела ли борда эту пачку: данные, пришедшие в скрытую вкладку, не
-    // должны запускать 3D-анимацию, даже если таймеры «выстрелят» позже.
     const seenLive = this.watching;
     const merged = [...snap.attacks];
     for (const a of attacks) {
@@ -280,7 +218,6 @@ export class BoardEngine {
     this.snapshot = { ...snap, attacks: merged };
     const step = attacks.length > 1 ? LIVE_STAGGER / (attacks.length - 1) : 0;
     attacks.forEach((a, i) => {
-      // Раунд атаки с бэкенда; если его нет — раунд, в котором её получили.
       const attackRound = a.round ?? round;
       this.scheduleInRound(
         attackRound,
@@ -291,7 +228,6 @@ export class BoardEngine {
     this.bump();
   }
 
-  /** Ответа нет: если данных ещё не было — offline, иначе показываем последние как устаревшие. */
   markScoreboardFailed() {
     this.connection = this.snapshot ? "stale" : "offline";
     this.bump();
@@ -305,14 +241,18 @@ export class BoardEngine {
       this.shielded.clear();
     }
     const known = this.layout.pos;
-    const window = this.opts.pollMs * SPREAD;
+    const snap = this.snapshot;
+    const roundMs = snap?.timing?.roundTime
+      ? snap.timing.roundTime * 1000
+      : this.opts.pollMs;
+    const window = roundMs * 0.95;
     for (const id of teamIds) {
       if (this.shielded.has(id) || !known.has(id)) continue;
       this.shielded.add(id);
       this.later(
         () => this.addShield(id),
         Math.random() * window,
-        this.pending
+        this.shieldTimeouts
       );
     }
     this.bump();
@@ -321,15 +261,12 @@ export class BoardEngine {
   private scheduleAttacks(attacks: Attack[]) {
     if (attacks.length === 0) return;
     const round = this.currentRound();
-    // Видела ли борда этот снапшот: данные, пришедшие в скрытую вкладку, не
-    // должны запускать 3D-первую кровь.
     const seenLive = this.watching;
     const snap = this.snapshot;
     const roundMs = snap?.timing?.roundTime
       ? snap.timing.roundTime * 1000
       : this.opts.pollMs;
     const window = roundMs * 0.95;
-    // Сначала золотые стрелки (first blood), потом остальные — перемешиваем для разнообразия
     const fb = attacks.filter((a) => a.firstBlood);
     const rest = attacks.filter((a) => !a.firstBlood);
     const ordered = [...fb];
@@ -383,13 +320,6 @@ export class BoardEngine {
     this.bump(950);
   }
 
-  /**
-   * Запускать ли 3D-первую кровь. Условия: данные пришли на видимую борду
-   * (`seenLive`), борда видима и сейчас, и атака относится к раунду, который
-   * она показывает (`isStaleRound` пропускает только проехавшие раунды с
-   * запасом в один — атака конца раунда приходит уже после снапшота
-   * следующего). Дуги при этом рисуются всегда, независимо от видимости.
-   */
   private canShowFirstBlood(
     a: Attack,
     round: number | null,
@@ -400,7 +330,6 @@ export class BoardEngine {
     return this.claimFirstBlood(a, a.round ?? round);
   }
 
-  /** Первая кровь этого раунда ещё не показывалась оверлеем? */
   private claimFirstBlood(a: Attack, round: number | null): boolean {
     const key = `${round}|${a.from}-${a.to}-${a.service ?? ""}`;
     if (this.shownFirstBloods.has(key)) return false;
@@ -412,8 +341,6 @@ export class BoardEngine {
     this.shields.push({ team, born: performance.now() });
     this.bump(SHIELD_LIFE);
   }
-
-  // ── ввод ───────────────────────────────────────────────────────────────
 
   setSize(W: number, H: number) {
     if (!W || (Math.abs(W - this.W) < 0.5 && Math.abs(H - this.H) < 0.5))
@@ -434,7 +361,6 @@ export class BoardEngine {
     this.bump();
   }
 
-  /** Снять hover, только если он всё ещё на `id` (mouseleave может обогнать mouseenter). */
   leave(id: number) {
     if (this.hover === id) this.setHover(null);
   }
@@ -452,7 +378,6 @@ export class BoardEngine {
     this.bump();
   }
 
-  /** Запуск 3D-анимации первой крови по клику на бейдж. */
   triggerFirstBloodOverlay(teamId: number) {
     const name = this.teamNames.get(teamId);
     const services = this.firstBloodServices.get(teamId);
@@ -460,9 +385,6 @@ export class BoardEngine {
     this.opts.onFirstBloodBadgeClick?.(teamId, name, services);
   }
 
-  // ── производные ────────────────────────────────────────────────────────
-
-  /** Цвет атаки: цвет сервиса, если API его прислал, иначе нейтральный. */
   toneOf(a: Attack): Tone {
     return (a.service && this.catalog[a.service]) || ACCENT;
   }
@@ -472,8 +394,6 @@ export class BoardEngine {
       (s) => s.team === team && now - s.born < SHIELD_LIFE
     );
   }
-
-  // ── канвас ─────────────────────────────────────────────────────────────
 
   private geom(f: number, t: number, pull: number, bow: number): Bezier | null {
     const L = this.layout;
@@ -492,7 +412,6 @@ export class BoardEngine {
         y: my + (this.H / 2 - my) * pull + dx * bow
       }
     };
-    // Обрезаем кривую по прямоугольникам карточек.
     const hw = (CARD_W / 2) * L.s + 3;
     const hh = (CARD_H / 2) * L.s + 3;
     let t0 = 0;
@@ -555,7 +474,6 @@ export class BoardEngine {
       const age = (now - sh.born) / SHIELD_LIFE;
       ctx.save();
       ctx.strokeStyle = SHIELD.c;
-      // Две волны, расходящиеся от карточки.
       for (const phase of [0, 0.35]) {
         const k = (age * 1.6 + phase) % 1;
         const pad = 6 + k * 26;
@@ -575,7 +493,6 @@ export class BoardEngine {
     }
   }
 
-  /** Наведённая команда: все её атаки за раунд — исходящие сплошные, входящие пунктиром. */
   private drawHoverLinks(ctx: CanvasRenderingContext2D) {
     const hov = this.hover;
     if (hov == null || !this.snapshot) return;
@@ -606,7 +523,6 @@ export class BoardEngine {
     const sc = this.layout.s;
     this.arcs = this.arcs.filter((a) => now - a.born < ARC_LIFE);
 
-    // Золотая стрелка (first blood) для сервиса должна идти раньше обычных.
     const sorted = [...this.arcs].sort((a, b) => {
       const aFb = a.firstBlood ? 0 : 1;
       const bFb = b.firstBlood ? 0 : 1;
@@ -632,7 +548,6 @@ export class BoardEngine {
       ctx.save();
       ctx.lineCap = "round";
       ctx.strokeStyle = col.c;
-      // Ореол + след.
       ctx.globalAlpha = fade * dim * 0.16;
       ctx.lineWidth = w + 5;
       this.path(ctx, g, g.t0, head);
@@ -643,7 +558,6 @@ export class BoardEngine {
       ctx.stroke();
 
       if (pr < 1) {
-        // Яркая «голова».
         ctx.globalAlpha = dim;
         ctx.lineWidth = w + 0.8;
         this.path(ctx, g, Math.max(g.t0, head - 0.12), head);
@@ -662,7 +576,6 @@ export class BoardEngine {
           this.flash[a.to] = performance.now() + 550;
           this.bump(600);
         }
-        // Наконечник + волна попадания.
         const q = bz(g, g.t1);
         const q2 = bz(g, g.t1 - 0.02);
         const an = Math.atan2(q.y - q2.y, q.x - q2.x);
@@ -692,7 +605,6 @@ export class BoardEngine {
         }
       }
 
-      // Бейдж у атакующего: код сервиса (если известен), иначе число флагов.
       const s0 = bz(g, g.t0);
       const r = 9 * Math.max(0.85, sc);
       ctx.globalAlpha = fade * dim;
@@ -710,7 +622,6 @@ export class BoardEngine {
       ctx.textBaseline = "middle";
       ctx.fillText(label, s0.x, s0.y + 0.5);
 
-      // Сервис известен и флагов больше одного — «×N» рядом с бейджем.
       if (svc && a.flags > 1) {
         const txt = `×${a.flags}`;
         ctx.font = `700 ${Math.round(r * 0.95)}px "IBM Plex Mono", monospace`;

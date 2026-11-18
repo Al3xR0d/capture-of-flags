@@ -10,11 +10,9 @@ const mk = (l: number, c: number, h: number): Tone => ({
 
 export interface StatusInfo extends Tone {
   label: string;
-  /** Короткая подпись для узких мест. */
   short: string;
 }
 
-/** Коды статусов чекера ForcAD. */
 export const STATUS: Record<number, StatusInfo> = {
   101: { label: "UP", short: "UP", ...mk(0.77, 0.17, 150) },
   102: { label: "CORRUPT", short: "CORRUPT", ...mk(0.73, 0.17, 55) },
@@ -25,7 +23,6 @@ export const STATUS: Record<number, StatusInfo> = {
 
 export const STATUS_ORDER = [101, 104, 103, 102, 110];
 
-/** Неизвестный / не пришедший статус. */
 export const UNKNOWN_STATUS: StatusInfo = {
   label: "НЕТ ДАННЫХ",
   short: "—",
@@ -39,11 +36,9 @@ export const SHIELD = mk(0.82, 0.09, 225);
 
 export interface ServiceInfo extends Tone {
   name: string;
-  /** Двухсимвольный код сервиса. */
   l: string;
 }
 
-/** Известные сервисы: код + цвет атаки. */
 const KNOWN_SERVICES: Record<string, { l: string; tone: Tone }> = {
   VibeAura: { l: "VA", tone: mk(0.8, 0.12, 205) },
   BioForge: { l: "BF", tone: mk(0.72, 0.15, 258) },
@@ -52,10 +47,6 @@ const KNOWN_SERVICES: Record<string, { l: string; tone: Tone }> = {
   SKUDS: { l: "SK", tone: mk(0.8, 0.12, 178) }
 };
 
-/**
- * Код неизвестного сервиса: заглавные буквы CamelCase (SmartHome → SH),
- * иначе первая буква + следующие по очереди (Notes → NO, NT, NE…).
- */
 function codeCandidates(name: string): string[] {
   const clean = name.replace(/[^A-Za-zА-Яа-я0-9]/g, "");
   const up = clean.toUpperCase();
@@ -65,7 +56,6 @@ function codeCandidates(name: string): string[] {
   return res;
 }
 
-/** Цвета для сервисов, которых нет в KNOWN_SERVICES. */
 const SPARE_TONES = [
   mk(0.92, 0.03, 250),
   mk(0.78, 0.14, 130),
@@ -77,7 +67,6 @@ const SPARE_TONES = [
   mk(0.77, 0.14, 160)
 ];
 
-/** Код и цвет каждого сервиса; неизвестным — первый свободный код и свободный цвет. */
 export function serviceCatalog(
   services: string[]
 ): Record<string, ServiceInfo> {
@@ -97,24 +86,16 @@ export function serviceCatalog(
   return res;
 }
 
-/** Время жизни дуги атаки, мс. */
 export const ARC_LIFE = 2600;
-/** Время полёта «головы» дуги, мс. */
 export const ARC_TRAVEL = 900;
-/** Полёт дуги первой крови — медленнее и заметнее, мс. */
 export const FB_TRAVEL = 1300;
-/** На сколько разносятся во времени дуги одной пачки из потока, мс. */
 export const LIVE_STAGGER = 1800;
-/** Длительность пульса щита, мс. */
 export const SHIELD_LIFE = 3000;
-/** Доля окна опроса, по которой раскидываются атаки (хвост — чтобы успели долететь). */
 export const SPREAD = 0.85;
-/** Ответ старше стольких окон опроса считается устаревшим. */
 export const STALE_POLLS = 2;
 
 export const BOWS = [0, 0.13, -0.13, 0.23, -0.23, 0.07, -0.07, 0.18, -0.18];
 
-/** Карточка команды при масштабе 1, px. */
 export const CARD_W = 160;
 export const CARD_H = 70;
 export const TIP_W = 280;

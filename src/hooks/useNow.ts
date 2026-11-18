@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 
-/** Текущее время, обновляется раз в `ms` (для таймеров). `enabled=false` — не тикает. */
 export function useNow(ms = 1000, enabled = true): number {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {

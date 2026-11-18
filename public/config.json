@@ -1,6 +1,6 @@
 {
   "title": "CTF · Attack-Defence",
-  "pollMs": 150000,
+  "pollMs": 60000,
   "requestTimeoutMs": 10000,
   "maxArcs": 40,
   "sources": {
@@ -11,7 +11,7 @@
       "url": "http://10.62.0.120:8000/ctfdata/"
     },
     "shields": {
-      "url": "http://gitlabapps.ctflab.local:8080/ctf-backend/api/wazuh/activity"
+      "url": "http://10.67.0.21:8000/alerts"
     }
   }
 }

@@ -1,6 +1,5 @@
 import type { ServerResponse } from "./types";
 
-/** Базовый снапшот старого API — 30 команд, 5 сервисов. */
 export const mockData: ServerResponse = {
   NumRound: 42,
   TeamData: [

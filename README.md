@@ -35,7 +35,7 @@ npm run lint
 ```json
 {
   "title": "CTF · Attack-Defence",
-  "pollMs": 150000,
+  "pollMs": 60000,
   "requestTimeoutMs": 10000,
   "maxArcs": 40,
   "sources": {

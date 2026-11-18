@@ -79,8 +79,6 @@ select option {
   font-family: var(--font-sans);
 }
 
-/* ── header ─────────────────────────────────────────────────────────── */
-
 .header {
   position: relative;
   display: grid;
@@ -249,8 +247,6 @@ select option {
   }
 }
 
-/* ── layout ─────────────────────────────────────────────────────────── */
-
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(270px, 20vw, 380px);
@@ -258,8 +254,6 @@ select option {
   padding: 14px;
   min-height: 0;
 }
-
-/* ── toggle button ──────────────────────────────────────────────────── */
 
 .map__toggle {
   position: absolute;
@@ -288,8 +282,6 @@ select option {
 .map__toggle:active {
   background: var(--line);
 }
-
-/* ── sidebar close button ───────────────────────────────────────────── */
 
 .sidebar__close {
   position: absolute;
@@ -322,8 +314,6 @@ select option {
 .sidebar {
   position: relative;
 }
-
-/* ── map ────────────────────────────────────────────────────────────── */
 
 .map {
   position: relative;
@@ -416,8 +406,6 @@ select option {
   height: 100%;
   pointer-events: none;
 }
-
-/* ── team card ──────────────────────────────────────────────────────── */
 
 .team {
   position: absolute;
@@ -521,8 +509,6 @@ select option {
   color: oklch(0.16 0.02 255);
   letter-spacing: 0.1em;
 }
-
-/* ── tooltip ────────────────────────────────────────────────────────── */
 
 .team__tag--fb {
   left: auto;
@@ -672,8 +658,6 @@ select option {
   font-size: 10.5px;
   font-weight: 600;
 }
-
-/* ── sidebar ────────────────────────────────────────────────────────── */
 
 .sidebar {
   display: flex;
@@ -944,8 +928,6 @@ select option {
   }
 }
 
-/* ── режим экрана (проектор) ──────────────────────────────────────── */
-
 .app--screen .team {
   cursor: none;
 }
@@ -957,7 +939,6 @@ select option {
   }
 }
 
-/* Desktop: show both, hide toggle buttons */
 @media (min-width: 769px) {
   .map__toggle,
   .sidebar__close {
@@ -965,16 +946,12 @@ select option {
   }
 }
 
-/* ── mobile ─────────────────────────────────────────────────────────── */
-
 @media (max-width: 768px) {
   .layout {
     grid-template-columns: 1fr;
     padding: 10px;
     gap: 10px;
   }
-
-  /* По умолчанию видна карта, скрыт сайдбар */
   .map {
     display: block;
   }
@@ -983,17 +960,14 @@ select option {
     display: none;
   }
 
-  /* Кнопка toggle видна когда sidebar скрыт */
   .map__toggle {
     display: grid;
   }
 
-  /* Кнопка close скрыта когда sidebar скрыт */
   .sidebar__close {
     display: none;
   }
 
-  /* Когда sidebar активен (layout--sidebar) */
   .layout--sidebar .map {
     display: none;
   }
@@ -1003,7 +977,6 @@ select option {
     flex-direction: column;
     gap: 12px;
     min-height: 0;
-    /* max-height: 50vh; */
     overflow: hidden;
     animation: slideIn 0.25s ease-out;
   }
@@ -1078,10 +1051,7 @@ select option {
   }
 }
 
-/* ── mobile landscape ───────────────────────────────────────────────── */
-
 @media (max-width: 768px) and (orientation: landscape) {
-  /* Разрешаем скролл на мобильных в ландшафтном режиме */
   html,
   body {
     overflow: auto !important;
@@ -1101,7 +1071,6 @@ select option {
     overflow: visible !important;
   }
 
-  /* По умолчанию видна карта, скрыт сайдбар */
   .map {
     display: block !important;
     min-height: 0;
@@ -1113,17 +1082,14 @@ select option {
     display: none !important;
   }
 
-  /* Кнопка toggle видна когда sidebar скрыт */
   .map__toggle {
     display: grid !important;
   }
 
-  /* Кнопка close скрыта */
   .sidebar__close {
     display: none !important;
   }
 
-  /* Когда sidebar активен */
   .layout--sidebar .map {
     display: none !important;
   }
@@ -1157,7 +1123,6 @@ select option {
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Уменьшаем заголовок */
   .header {
     padding: 6px 10px;
     gap: 8px;
@@ -1186,14 +1151,12 @@ select option {
     height: 5px;
   }
 
-  /* Кнопки чуть меньше */
   .map__toggle,
   .sidebar__close {
     width: 36px;
     height: 36px;
   }
 
-  /* Команды чуть меньше */
   .team {
     width: 120px;
   }
@@ -1216,7 +1179,6 @@ select option {
     margin-top: 5px;
   }
 
-  /* Тултип меньше */
   .tip {
     width: 200px;
     padding: 10px;
@@ -1226,7 +1188,6 @@ select option {
     font-size: 16px;
   }
 
-  /* Рейтинг компактнее */
   .rank-row {
     padding: 4px 6px;
     grid-template-columns: 22px 28px 22px minmax(0, 1fr) auto;
@@ -1245,7 +1206,6 @@ select option {
     font-size: 12px;
   }
 
-  /* Легенда компактнее */
   .svc-legend__name {
     font-size: 11px;
   }

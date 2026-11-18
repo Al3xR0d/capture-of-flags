@@ -11,7 +11,6 @@ interface Props {
 
 export function Header({ title, view, mock }: Props) {
   const { teamCount: t, serviceCount: s, timing, paused } = view;
-  // На паузе forcad не двигает начало раунда — таймер замирает на последнем значении.
   const now = useNow(1000, !!timing && !paused);
 
   let roundLeft: number | null = null;

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { FirstBloodContext, FirstBloodBatchContext, type FirstBloodEvent, type TriggerFirstBloodBatch } from './context';
-// three.js и сцена грузятся лениво (отдельный чанк), оверлею нужен только таймлайн
 import type { FrameInfo, Phase, Quality } from './scene';
 import { T } from './timeline';
 import { createSfx, type Sfx } from './sound';
@@ -46,7 +45,6 @@ function useScramble(text: string, active: boolean, rate = 0.55): string {
   return active ? out : '';
 }
 
-// после проявления — редкие «сбои» отдельных букв
 function useFlicker(text: string, active: boolean): string {
   const [out, setOut] = useState(text);
   useEffect(() => {
@@ -135,7 +133,6 @@ function Overlay({ events, holdMs, volume, quality, onClosing, onDone }: Overlay
     setTimeout(onDone, 560);
   }, [onClosing, onDone]);
 
-  // Сцена и звук — один раз на показ
   useEffect(() => {
     const sfx = createSfx({ volume });
     sfxRef.current = sfx;
@@ -148,7 +145,6 @@ function Overlay({ events, holdMs, volume, quality, onClosing, onDone }: Overlay
         }, at * 1000)));
       } else if (!closingRef.current) setPhase(p);
     };
-    // HUD захвата цели двигается вслед за кубом напрямую через DOM, без ререндеров
     const onFrame = ({ t, rect, stage: sceneStage, progress, label }: FrameInfo) => {
       const el = lockRef.current;
       if (!el) return;
@@ -156,7 +152,6 @@ function Overlay({ events, holdMs, volume, quality, onClosing, onDone }: Overlay
       if (label && targetRef.current && targetRef.current.textContent !== label) targetRef.current.textContent = label;
       if (el.dataset.stage !== stage) el.dataset.stage = stage;
       if (stage === 'done') return;
-      // в крупном плане куб больше экрана — прицел становится рамкой видоискателя
       const vw = window.innerWidth;
       const vh = window.innerHeight;
       const pad = Math.max(10, rect.w * 0.06);
@@ -167,13 +162,11 @@ function Overlay({ events, holdMs, volume, quality, onClosing, onDone }: Overlay
       const y1 = Math.min(vh - m, rect.y + rect.h + pad);
       const inside = x1 - x0 > vw * 0.55 ? '1' : '0';
       if (el.dataset.inside !== inside) el.dataset.inside = inside;
-      // справа не помещается плашка — ставим её слева от цели
       const side = x1 + 250 > vw && x0 > 250 ? 'left' : 'right';
       if (el.dataset.side !== side) el.dataset.side = side;
       el.style.transform = `translate(${x0}px, ${y0}px)`;
       el.style.width = `${Math.max(40, x1 - x0)}px`;
       el.style.height = `${Math.max(40, y1 - y0)}px`;
-      // скобки «наводятся» рывками
       const lockP = Math.floor(clamp01((t - T.lock) / 0.8) * 4) / 4;
       el.style.setProperty('--k', String(1 + 0.55 * (1 - lockP)));
       const p = progress ?? clamp01((t - T.impact) / (T.shatter - T.impact));
@@ -183,7 +176,6 @@ function Overlay({ events, holdMs, volume, quality, onClosing, onDone }: Overlay
     let scene: { dispose(): void } | null = null;
     let cancelled = false;
     const fallback = (err: unknown) => {
-      // WebGL недоступен — показываем HUD и звук по тому же таймлайну, без 3D
       console.warn('[first-blood] WebGL unavailable, HUD-only fallback', err);
       sfx.bed(T.shatter);
       onPhase('start');
@@ -215,7 +207,6 @@ function Overlay({ events, holdMs, volume, quality, onClosing, onDone }: Overlay
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Автозакрытие; каждое новое событие продлевает показ
   useEffect(() => {
     if (phase !== 'shatter') return undefined;
     const id = setTimeout(close, holdMs);
@@ -290,22 +281,13 @@ function Overlay({ events, holdMs, volume, quality, onClosing, onDone }: Overlay
 
 export interface FirstBloodProviderProps {
   children?: ReactNode;
-  /** Сколько держать титр после взрыва, мс; каждое новое событие продлевает показ */
   holdMs?: number;
-  /** Громкость 0..1, 0 — без звука */
   volume?: number;
-  /** auto снижает качество на телефонах и слабых CPU */
   quality?: Quality;
-  /** Вызывается когда оверлей показывается */
   onShow?: () => void;
-  /** Вызывается когда оверлей полностью скрыт */
   onClose?: () => void;
 }
 
-/**
- * Оборачивает приложение. Анимация вызывается через useFirstBlood()({ team, service, color }).
- * Если события приходят во время показа — они добавляются строками снизу.
- */
 export function FirstBloodProvider({ children, holdMs = 7000, volume = 0.7, quality = 'auto', onShow, onClose }: FirstBloodProviderProps) {
   const [current, setCurrent] = useState<{ id: string; events: QueuedEvent[] } | null>(null);
   const activeRef = useRef(false);
@@ -324,15 +306,12 @@ export function FirstBloodProvider({ children, holdMs = 7000, volume = 0.7, qual
       return;
     }
     if (activeRef.current) {
-      // Анимация уже идёт — добавляем в очередь для последующего показа
       queueRef.current.push(item);
       return;
     }
-    // Каждая первая кровь — отдельная анимация
     startShow([item]);
   }, [startShow]);
 
-  // Batch-триггер: запускает анимацию сразу со списком событий
   const batchTrigger = useCallback<TriggerFirstBloodBatch>((events) => {
     const items = events.map(normalize);
     if (!items.length) return;
@@ -347,7 +326,6 @@ export function FirstBloodProvider({ children, holdMs = 7000, volume = 0.7, qual
     startShow(items);
   }, [startShow]);
 
-  // прогрев в простое: подгрузить three.js, создать рендерер, скомпилировать шейдеры, посчитать осколки
   useEffect(() => {
     const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
     const run = () => { import('./scene').then((m) => m.preloadFirstBlood(quality)).catch(() => {}); };
@@ -368,9 +346,6 @@ export function FirstBloodProvider({ children, holdMs = 7000, volume = 0.7, qual
     }
   }, [startShow, onClose]);
 
-  // Уход с борды: показ в скрытой вкладке никто не видит, а к возвращению он
-  // «догонит» пользователя уже в другом раунде. Поэтому очередь чистим, а
-  // текущий показ снимаем.
   useEffect(() => {
     const onVisibility = () => {
       if (!document.hidden) return;

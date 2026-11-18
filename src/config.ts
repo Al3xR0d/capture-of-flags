@@ -1,24 +1,14 @@
-/**
- * Конфиг борды. Источники данных читаются в рантайме из /config.json, чтобы
- * менять адреса API без пересборки (в docker — монтировать файл поверх).
- * URL-параметры — режим отображения и моки.
- */
-
 export interface SourceConfig {
-  /** Пустой / отсутствует → источник выключен и его данные не отображаются. */
   url?: string | null;
 }
 
 export interface BoardConfig {
   title: string;
-  /** Период опроса API, мс. Атаки одного ответа раскидываются по этому окну. */
   pollMs: number;
   requestTimeoutMs: number;
   maxArcs: number;
   sources: {
-    /** Бэкенд борды (ctf-board-backend). Задан — используется вместо scoreboard. */
     board: SourceConfig;
-    /** Старый API (/ctfdata/). */
     scoreboard: SourceConfig;
     shields: SourceConfig;
   };
@@ -28,24 +18,22 @@ export type BoardMode = "interactive" | "screen";
 
 export interface BoardQuery {
   mode: BoardMode;
-  /** Своя команда (подсветка «ВЫ»). */
   myTeam: number | null;
   mock: boolean;
   mockTeams: number;
-  /** Переопределение pollMs. */
   pollMs: number | null;
 }
 
 export const DEFAULT_CONFIG: BoardConfig = {
   title: "CTF · Attack-Defence",
-  pollMs: 150_000,
+  pollMs: 60_000,
   requestTimeoutMs: 10_000,
   maxArcs: 40,
   sources: {
     board: { url: "http://10.67.0.21:8000/" },
     scoreboard: { url: "http://10.62.0.120:8000/ctfdata/" },
     shields: {
-      url: "http://gitlabapps.ctflab.local:8080/ctf-backend/api/wazuh/activity"
+      url: "http://10.67.0.21:8000/alerts"
     }
   }
 };

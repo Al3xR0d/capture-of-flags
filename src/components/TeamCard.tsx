@@ -3,10 +3,8 @@ import { Avatar } from "./Avatar";
 
 interface Props {
   card: CardView;
-  /** Нет в режиме экрана. */
   onEnter?: (id: number) => void;
   onLeave?: (id: number) => void;
-  /** Клик по бейджу первой крови — запускает 3D-анимацию. */
   onFirstBloodBadgeClick?: (teamId: number) => void;
 }
 

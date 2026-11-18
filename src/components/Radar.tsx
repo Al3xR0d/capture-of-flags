@@ -1,5 +1,3 @@
-// React Bits — Radar (https://reactbits.dev/backgrounds/radar).
-// Отличие от оригинала: размер по ResizeObserver контейнера, а не window.resize.
 import { Renderer, Program, Mesh, Triangle } from 'ogl';
 import { useEffect, useRef } from 'react';
 

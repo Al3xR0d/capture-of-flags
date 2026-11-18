@@ -11,10 +11,6 @@ const isObj = (v: unknown): v is Record<string, unknown> =>
 const num = (v: unknown): number | null =>
   typeof v === "number" && Number.isFinite(v) ? v : null;
 
-/**
- * Старый API → снапшот борды. Терпим к мусору: битые команды/сервисы/атаки
- * пропускаются; если нет ни одной валидной команды — ответа как бы нет.
- */
 export function normalizeScoreboard(raw: unknown): Snapshot | null {
   if (!isObj(raw) || !Array.isArray(raw.TeamData)) return null;
   const res = raw as Partial<ServerResponse>;
@@ -55,7 +51,6 @@ export function normalizeScoreboard(raw: unknown): Snapshot | null {
         typeof t.team_name === "string" && t.team_name
           ? t.team_name
           : `team-${id}`,
-      // Нет team_pos — место по порядку в ответе.
       place: num(t.team_pos) ?? teams.length + 1,
       status
     });
@@ -73,7 +68,6 @@ export function normalizeScoreboard(raw: unknown): Snapshot | null {
   };
 }
 
-/** Wazuh → id команд, у которых сработала защита. */
 export function normalizeShields(raw: unknown): number[] | null {
   if (!isObj(raw)) return null;
   const ids: number[] = [];
@@ -84,10 +78,6 @@ export function normalizeShields(raw: unknown): number[] | null {
   return ids;
 }
 
-/**
- * Снапшот бэкенда борды → снапшот. `receivedAt` — Date.now() в момент
- * получения: по нему и serverTime поправляем начало раунда на сдвиг часов.
- */
 export function normalizeBoard(
   raw: unknown,
   receivedAt = Date.now()
@@ -112,7 +102,6 @@ export function normalizeBoard(
     for (const s of Array.isArray(t.services) ? t.services : []) {
       const name = isObj(s) ? serviceById[s.serviceId] : undefined;
       if (!name) continue;
-      // status 0 — чекер по этой паре ещё не отработал.
       if (num(s.status)) status[name] = s.status;
       if (num(s.sla) != null) sla[name] = s.sla;
     }
@@ -172,8 +161,6 @@ export function normalizeBoardAttacks(
       flags,
       service: serviceById[a.serviceId],
       firstBlood: a.firstBlood === true,
-      // Раунд атаки: по нему борда отсекает атаки, пришедшие задним числом
-      // (вкладка была в фоне, поток отдал накопившиеся пачки).
       round: num(a.round) ?? undefined
     });
   }

@@ -8,23 +8,15 @@ import {
   normalizeShields
 } from "./normalize";
 
-/**
- * Подключаемые источники. Каждый резолвится в null / молчит, если ответа нет
- * или он невалидный, — тогда соответствующие данные просто не отображаются.
- */
-
 export interface FeedHandlers {
   snapshot(s: Snapshot): void;
-  /** Пачка атак из потока (только у фида бэкенда борды). */
   attacks(a: Attack[]): void;
-  /** Табло не ответило. */
   failed(): void;
   shields(teamIds: number[]): void;
 }
 
 export interface Feed {
   readonly kind: "board" | "http" | "mock";
-  /** Запускает фид, возвращает остановку. */
   start(h: FeedHandlers): () => void;
 }
 
@@ -50,7 +42,6 @@ function httpFetcher<T>(
   };
 }
 
-/** Периодический опрос: функция зовётся сразу и раз в `ms`, без наложения запросов. */
 function every(ms: number, fn: () => Promise<void>): () => void {
   let stopped = false;
   let inFlight = false;
@@ -71,10 +62,6 @@ function every(ms: number, fn: () => Promise<void>): () => void {
   };
 }
 
-/**
- * Опрос табло старого формата (или моков) + щитов. Щиты применяются после
- * табло, чтобы попасть в тот же раунд.
- */
 function pollingFeed(
   kind: "http" | "mock",
   pollMs: number,
@@ -97,10 +84,6 @@ function pollingFeed(
   };
 }
 
-/**
- * Бэкенд борды: SSE /api/stream (`board` — снапшот, `attacks` — пачка атак).
- * EventSource сам переподключается; щиты Wazuh — отдельным опросом.
- */
 function boardFeed(
   baseUrl: string,
   pollMs: number,

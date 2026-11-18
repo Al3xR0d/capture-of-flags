@@ -35,7 +35,6 @@ export default function App({ config, query }: Props) {
     [handleFirstBlood],
   );
 
-  // Обработка клика на бейдж первой крови — запускает анимацию со всеми сервисами
   const onFirstBloodBadgeClick = useMemo(
     () => (_teamId: number, teamName: string, services: string[]) => {
       if (!firstBloodBatch || !services.length) return;
@@ -52,10 +51,8 @@ export default function App({ config, query }: Props) {
     onFirstBloodBadgeClick,
   });
 
-  // Сохраняем ссылку на engine для доступа из callback оверлея
   engineRef.current = engine;
 
-  // Регистрируем коллбэк для управления бейджем первой крови
   useEffect(() => {
     return setFirstBloodBadgeCallback((hide: boolean) => {
       engine.setHideFirstBloodBadge(hide);

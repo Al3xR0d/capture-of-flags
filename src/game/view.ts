@@ -234,7 +234,6 @@ export function buildView(engine: BoardEngine, { mode, myTeam }: ViewOptions) {
     score: score(t),
     ...avatar(t.name)
   });
-  const topN = mode === "screen" ? 10 : 5;
   const me = myTeam != null ? byId.get(myTeam) : undefined;
 
   return {
@@ -246,10 +245,8 @@ export function buildView(engine: BoardEngine, { mode, myTeam }: ViewOptions) {
     serviceCount: services.length,
     cards,
     tip,
-    top: ranked.slice(0, topN).map(rankRow),
-    topN,
+    top: ranked.map(rankRow),
     hasMyTeam: !!me,
-    myRow: me && !ranked.slice(0, topN).includes(me) ? rankRow(me) : null,
     services: services.flatMap((name) =>
       catalog[name] ? [catalog[name]] : []
     ),

@@ -2,6 +2,7 @@ import { STATUS, STATUS_ORDER } from "../game/constants";
 import type { BoardEngine } from "../game/engine";
 import type { BoardView, RankRow } from "../game/view";
 import { Avatar } from "./Avatar";
+import { Flipper, Flipped } from "react-flip-toolkit";
 
 interface Props {
   engine: BoardEngine;
@@ -33,30 +34,35 @@ export function Sidebar({ engine, view, onClose }: Props) {
 
 function Ranking({ view }: { view: BoardView }) {
   return (
-    <section className="panel">
-      <h2 className="panel__title">ТОП-{view.topN}</h2>
-      <ol className="ranking">
-        {view.top.map((r) => (
-          <RankItem key={r.id} row={r} />
-        ))}
-        {view.myRow && <RankItem row={view.myRow} detached />}
-      </ol>
+    <section className="panel panel--ranking">
+      <h2 className="panel__title">РЕЙТИНГ</h2>
+      <div className="ranking__scroll">
+        <Flipper flipKey={view.round ?? "initial"}>
+          <ol className="ranking">
+            {view.top.map((r) => (
+              <RankItem key={r.id} row={r} />
+            ))}
+          </ol>
+        </Flipper>
+      </div>
     </section>
   );
 }
 
-function RankItem({ row: r, detached = false }: { row: RankRow; detached?: boolean }) {
-  const cls = ["rank-row", r.mine && "rank-row--mine", detached && "rank-row--detached"].filter(Boolean).join(" ");
+function RankItem({ row: r }: { row: RankRow }) {
+  const cls = ["rank-row", r.mine && "rank-row--mine"].filter(Boolean).join(" ");
   return (
-    <li className={cls}>
-      <div className="rank-row__place">{r.place}</div>
-      <div className="rank-row__delta" style={{ color: r.delta.color }}>
-        {r.delta.text}
-      </div>
-      <Avatar data={r} size={26} fontSize={10} />
-      <div className="rank-row__name">{r.name}</div>
-      {r.score != null && <div className="rank-row__score">{r.score}</div>}
-    </li>
+    <Flipped flipId={r.id}>
+      <li className={cls}>
+        <div className="rank-row__place">{r.place}</div>
+        <div className="rank-row__delta" style={{ color: r.delta.color }}>
+          {r.delta.text}
+        </div>
+        <Avatar data={r} size={26} fontSize={10} />
+        <div className="rank-row__name">{r.name}</div>
+        {r.score != null && <div className="rank-row__score">{r.score}</div>}
+      </li>
+    </Flipped>
   );
 }
 

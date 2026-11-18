@@ -56,8 +56,8 @@ export class BoardEngine {
   glow: Record<number, { until: number; color: string; glow: string }> = {};
   catalog: Record<string, ServiceInfo> = {};
 
-  W = 1200;
-  H = 800;
+  W = 2400;
+  H = 1350;
   layout: MapLayout = { s: 1, pos: new Map() };
   teamNames = new Map<number, string>();
   firstBloodServices = new Map<number, string[]>();

@@ -96,6 +96,6 @@ export const STALE_POLLS = 2;
 
 export const BOWS = [0, 0.13, -0.13, 0.23, -0.23, 0.07, -0.07, 0.18, -0.18];
 
-export const CARD_W = 160;
-export const CARD_H = 70;
-export const TIP_W = 280;
+export const CARD_W = 190;
+export const CARD_H = 82;
+export const TIP_W = 310;
